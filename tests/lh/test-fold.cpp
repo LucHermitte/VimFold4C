@@ -145,5 +145,68 @@ void control_statements() {
     }
     //
     // try catch
+}
 
+void embedded_ctrl_stments()
+{
+    if (t1) {
+        if (t11) {
+            a11();
+        } else if (t12) {
+            a12();
+        } else {
+            a1x();
+        }
+    } else {
+        a2();
+    }
+}
+
+int typical_main (int argc, char **argv)
+{
+    try {
+        bool verbose = false;
+        bool noexec  = false;
+        std::string output_dir;
+        std::vector<std::string> files;
+
+        for (int i=1; i!=argc ; ++i) {
+            const std::string s = argv[i];
+            if (argv[i][0] == '-') {
+                if (s == "-h" || s=="--help" ) {
+                    std::cout << usage(argv[0]) << "\n";
+                    return EXIT_SUCCESS;
+                } else if (s == "-n" || s == "--noexec") {
+                    noexec = true;
+                } else if (s == "-v" || s == "--verbose") {
+                    verbose = true;
+                } else if (s == "-o" || s == "--output") {
+                    if (i+1 == argc)
+                        throw std::runtime_error(usage(argv[0], "Not enough arguments to specify output directory"));
+                    output_dir = argv[++i]; // yes i is increment. But the bound is made the line before.
+                } else {
+                    throw std::runtime_error(std::string(argv[0])+": Unexpected option: '"+s+"'");
+                }
+            } else {
+                files.push_back(s);
+            }
+        }
+        if (files.empty())
+            throw std::runtime_error(usage(argv[0], "No file specified"));
+        if (output_dir.empty() && !noexec)
+            throw std::runtime_error(usage(argv[0], "Output directory not specified"));
+
+        for (std::vector<std::string>::const_iterator b = files.begin(), e = files.end()
+                ; b != e
+                ; ++b
+            )
+        {
+            std::cout << b << "\n";
+        }
+
+        return EXIT_SUCCESS;
+    } catch (std::exception const& e) {
+        std::cerr << e.what() << "\n";
+    }
+    return EXIT_FAILURE;
 }

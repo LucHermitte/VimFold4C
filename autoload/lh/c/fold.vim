@@ -74,13 +74,76 @@ endfunction
 " levels from one call to the other.
 " It means sometimes we have to refresh everything
 function! lh#c#fold#expr(lnum)
-  " Resize b:fold_* arrays to have as many lines as the buffer
+  " 0- Resize b:fold_* arrays to have as many lines as the buffer
   if len(b:fold_levels) <= line('$')
     let b:fold_data_begin += range(len(b:fold_data_begin), line('$'))
     let b:fold_data_end   += range(len(b:fold_data_end), line('$'))
     let b:fold_levels     += repeat([0], 1+line('$')-len(b:fold_levels))
   endif
 
+  " 1- First obtain the current fold boundaries
+  let where_it_starts = b:fold_data_begin[a:lnum]
+  if where_it_starts == a:lnum
+    " it's possible the boundaries was never known => compute thems
+    let where_it_ends   = s:WhereInstructionEnds(a:lnum)
+    " let where_it_starts = b:fold_data_begin[a:lnum] " update
+  else
+    " Actually, we can't know when text is changed, the where it starts may
+    " change
+    let where_it_ends = b:fold_data_end[a:lnum]
+  endif
+
+  " 2- Then return what must be
+  "
+  " Case: "} catch|else|... {"
+  " TODO: use the s:opt_show_if_and_else() option
+  " -> We check the next line to see whether it closes something before opening
+  "  something new
+  if a:lnum < line('$')
+    let next_line = getline(a:lnum+1)
+    if next_line =~ '}.*{'
+      " assert(where_it_ends < a:lnum+1)
+      let decr = len(substitute(matchstr(next_line, '^[^{]*'), '[^}]', '', 'g'))
+            \ + len(substitute(getline('.'), '[^}]', '', 'g'))
+      return s:DecrFoldLevel(a:lnum, decr)
+    endif
+  endif
+
+  let line = getline(where_it_ends)
+  " Case: opening, but started earlier
+  " -> already opened -> keep fold level
+  if a:lnum != where_it_starts && line =~ '{[^}]*$'
+    return s:KeepFoldLevel(a:lnum)
+  endif
+
+
+  " "} ... {" -> "{"  // the return of the s:opt_show_if_and_else()
+  let line = substitute(line, '^[^{]*}\ze.*{', '', '')
+  let incr = len(substitute(line, '[^{]', '', 'g'))
+  let decr = len(substitute(line, '[^}]', '', 'g'))
+  if incr > decr
+    return s:IncrFoldLevel(a:lnum, incr-decr)
+  elseif decr > incr
+    if a:lnum != where_it_ends
+      " Wait till the last moment!
+      return s:KeepFoldLevel(a:lnum)
+    else
+      return s:DecrFoldLevel(a:lnum, decr-incr)
+    endif
+  else
+    " This is where we can detect instructions spawning on several lines
+    if line =~ '{.*}'
+      " first case: oneliner that cannot be folded => we left it as it is
+      if     a:lnum == where_it_starts && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
+      elseif a:lnum == where_it_starts                            | return s:IncrFoldLevel(a:lnum, 1)
+      elseif a:lnum == where_it_ends                              | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
+      endif
+    endif
+    return s:KeepFoldLevel(a:lnum)
+  endif
+
+  " ##################################################
+  throw "nothing after !!!"
   " Has the instruction started earlier ?
   " => Use the same fold level. Only the first line determines where it starts
   let where_it_starts = b:fold_data_begin[a:lnum]
@@ -107,7 +170,8 @@ function! lh#c#fold#expr(lnum)
   if a:lnum < line('$')
     let line = getline(a:lnum+1)
     if line =~ '}.*{'
-      return s:DecrFoldLevel(a:lnum, len(substitute(matchstr(line, '^[^{]*'), '[^}]', '', 'g')))
+      return s:DecrFoldLevel(a:lnum, len(substitute(matchstr(line, '^[^{]*'), '[^}]', '', 'g'))
+            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g')))
       " return 's'.len(substitute(matchstr(line, '^[^{]*'), '[^}]', '', 'g'))
     endif
   endif
@@ -265,6 +329,19 @@ function! s:WhereInstructionEnds(lnum)
     let lnum += 1
   endwhile
 
+  " "} ... {" case
+  if a:lnum < lnum && getline(lnum) =~ '}.*{'
+    let lnum =- 1
+  endif
+
+  " Precautionary move: we clear begin info for the next line
+  if lnum <= last_line
+    let b:fold_data_begin[lnum+1] = lnum+1
+  else
+    let lnum -= 1
+  endif
+
+  " assert(lnum <= last_line)
   let l = a:lnum
   while l <= lnum
     let b:fold_data_end[l] = lnum
