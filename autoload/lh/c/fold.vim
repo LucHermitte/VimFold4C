@@ -3,7 +3,7 @@
 " File:         addons/VimFold4C/autoload/lh/c/fold.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/VimFold4C>
-" Version:	3.0.2
+" Version:	3.0.3
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
