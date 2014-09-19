@@ -5,7 +5,7 @@
 "		<URL:http://github.com/LucHermitte/VimFold4C>
 " License:      GPLv3 with exceptions
 "               <URL:http://code.google.com/p/lh-vim/wiki/License>
-" Version:	3.0.1
+" Version:	3.0.2
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
