@@ -76,15 +76,17 @@ endfunction
 function! lh#c#fold#expr(lnum)
   " Resize b:fold_levels array to have as many lines as the buffer
   if len(b:fold_levels) <= line('$')
-    let b:fold_levels += repeat([0], 1+line('$')-len(b:fold_levels))
+    let b:fold_data_begin += range(len(b:fold_data_begin), line('$'))
+    let b:fold_data_end   += range(len(b:fold_data_end), line('$'))
+    let b:fold_levels     += repeat([0], 1+line('$')-len(b:fold_levels))
   endif
 
   " Has the instruction started earlier ?
   " => Use the same fold level. Only the first line determines where it starts
-  let where_it_starts = get(b:fold_data_begin, a:lnum, a:lnum)
+  let where_it_starts = b:fold_data_begin[a:lnum]
   if where_it_starts != a:lnum
     " If we are on a "where_it_ends" line, return s1 if the line matches {}
-    let where_it_ends = get(b:fold_data_end, a:lnum, a:lnum)
+    let where_it_ends = b:fold_data_end[a:lnum]
     if a:lnum == where_it_ends && getline(where_it_ends) =~ '{\s*}'
       return s:DecrFoldLevel(a:lnum, 1)
     endif
@@ -122,8 +124,13 @@ function! lh#c#fold#expr(lnum)
     return s:IncrFoldLevel(a:lnum, incr-decr)
     " return "a".(incr-decr)
   elseif decr > incr
-    return s:DecrFoldLevel(a:lnum, decr-incr)
-    " return "s".(decr-incr)
+    if a:lnum != where_it_ends
+      " Wait till the last moment!
+      return s:KeepFoldLevel(a:lnum)
+    else
+      return s:DecrFoldLevel(a:lnum, decr-incr)
+      " return "s".(decr-incr)
+    endif
   else
     " This is where we can detect instructions spawning on several lines
     " For now, we only handle "function()\n{}"
@@ -142,7 +149,7 @@ endfunction
 function! CFoldText_(lnum)
   let ts = s:Build_ts()
   let lnum = a:lnum
-  let lastline = line('$')
+  let lastline = b:fold_data_end[a:lnum]
   let line = ''
 
   let lnum = s:NextNonCommentNonBlank(lnum, s:opt_fold_blank())
@@ -234,6 +241,13 @@ function! lh#c#fold#text()
   return CFoldText_(v:foldstart)
 endfunction
 
+" Function: lh#c#fold#clear(cmd)                          {{{2
+function! lh#c#fold#clear(cmd)
+  let b:fold_data_begin = range(0, line('$'))
+  let b:fold_data_end   = range(0, line('$'))
+  let b:fold_levels     = repeat([0], line('$')+1)
+  exe 'normal! '.a:cmd
+endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1

@@ -5,9 +5,8 @@
 
 
 // One line class
-struct Foo {};
+struct Foo { };
 
-// a class
 struct Bar {
     // Multi-lines fn definition, with no body
     Bar()

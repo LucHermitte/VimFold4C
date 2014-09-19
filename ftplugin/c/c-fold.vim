@@ -5,7 +5,7 @@
 "		<URL:http://github.com/LucHermitte/VimFold4C>
 " License:      GPLv3 with exceptions
 "               <URL:http://code.google.com/p/lh-vim/wiki/License>
-" Version:	3.0.0
+" Version:	3.0.1
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -74,9 +74,14 @@ setlocal foldtext=lh#c#fold#text()
 command! -b -nargs=0 ShowInstrBegin call s:ShowInstrBegin()
 
 " Script Data                                    {{{2
-let b:fold_data_begin = {}
-let b:fold_data_end   = {}
+silent! unlet b:fold_data_begin " just in case...
+silent! unlet b:fold_data_end
+let b:fold_data_begin = range(0, line('$'))
+let b:fold_data_end   = range(0, line('$'))
 let b:fold_levels     = []
+
+nnoremap <silent> zx :call lh#c#fold#clear('zx')<cr>
+nnoremap <silent> zX :call lh#c#fold#clear('zX')<cr>
 
 
 "------------------------------------------------------------------------
