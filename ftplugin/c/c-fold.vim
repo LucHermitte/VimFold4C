@@ -88,11 +88,9 @@ setlocal foldtext=lh#c#fold#text()
 command! -b -nargs=0 ShowInstrBegin call s:ShowInstrBegin()
 
 " Script Data                                    {{{2
-silent! unlet b:fold_data_begin " just in case...
-silent! unlet b:fold_data_end
-let b:fold_data_begin = range(0, line('$'))
-let b:fold_data_end   = range(0, line('$'))
-let b:fold_levels     = []
+let b:fold_data_begin = repeat([0], 1+line('$'))
+let b:fold_data_end   = deepcopy(b:fold_data_begin)
+let b:fold_levels     = deepcopy(b:fold_data_begin)
 
 " Mappings {{{1
 nnoremap <silent> zx :call lh#c#fold#clear('zx')<cr>

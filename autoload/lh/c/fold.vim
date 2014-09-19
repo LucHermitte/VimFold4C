@@ -32,6 +32,24 @@ if !exists('s:verbose')
 endif
 function! lh#c#fold#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
+  if s:verbose
+    sign define Fold1   text=1  texthl=Identifier
+    sign define Fold2   text=2  texthl=Identifier
+    sign define Fold3   text=3  texthl=Identifier
+    sign define Fold4   text=4  texthl=Identifier
+    sign define Fold5   text=5  texthl=Identifier
+    sign define Fold1gt text=>1 texthl=Identifier
+    sign define Fold2gt text=>2 texthl=Identifier
+    sign define Fold3gt text=>3 texthl=Identifier
+    sign define Fold4gt text=>4 texthl=Identifier
+    sign define Fold5gt text=>5 texthl=Identifier
+    sign define Fold1lt text=<1 texthl=Identifier
+    sign define Fold2lt text=<2 texthl=Identifier
+    sign define Fold3lt text=<3 texthl=Identifier
+    sign define Fold4lt text=<4 texthl=Identifier
+    sign define Fold5lt text=<5 texthl=Identifier
+  endif
+  exe 'sign unplace * buffer='.bufnr('%')
   return s:verbose
 endfunction
 
@@ -67,31 +85,42 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
-"
+
 " Function: lh#c#fold#expr()                              {{{2
 " Expectation: with i < j, lh#c#fold#expr(i) is called before lh#c#fold#expr(j)
 " This way instead of having something recursive to the extreme, we cache fold
 " levels from one call to the other.
-" It means sometimes we have to refresh everything
+" It means sometimes we have to refresh everything with zx/zX
+let g:errors = []
+
+function! s:log(lnum, text)
+  if a:lnum == 159
+    let g:errors+=[a:text]
+  endif
+endfunction
+
 function! lh#c#fold#expr(lnum)
   " 0- Resize b:fold_* arrays to have as many lines as the buffer
-  if len(b:fold_levels) <= line('$')
-    let b:fold_data_begin += range(len(b:fold_data_begin), line('$'))
-    let b:fold_data_end   += range(len(b:fold_data_end), line('$'))
-    let b:fold_levels     += repeat([0], 1+line('$')-len(b:fold_levels))
-  endif
+  call s:ResizeCache()
 
   " 1- First obtain the current fold boundaries
   let where_it_starts = b:fold_data_begin[a:lnum]
-  if where_it_starts == a:lnum
+  if where_it_starts == 0
     " it's possible the boundaries was never known => compute thems
     let where_it_ends   = s:WhereInstructionEnds(a:lnum)
-    " let where_it_starts = b:fold_data_begin[a:lnum] " update
+    let where_it_starts = b:fold_data_begin[a:lnum]
+    if where_it_ends != b:fold_data_end[a:lnum]
+      let g:errors += ['at 'a:lnum.' end detected at:'.where_it_ends.', bbut cached at:'.b:fold_data_end[a:lnum]]
+    endif
   else
     " Actually, we can't know when text is changed, the where it starts may
     " change
     let where_it_ends = b:fold_data_end[a:lnum]
   endif
+
+  call s:log(a:lnum, "start: ".where_it_starts)
+  call s:log(a:lnum, "end: ".where_it_ends)
+
 
   " 2- Then return what must be
   "
@@ -100,11 +129,13 @@ function! lh#c#fold#expr(lnum)
   " -> We check the next line to see whether it closes something before opening
   "  something new
   if a:lnum < line('$')
+    call s:log(a:lnum, '1')
     let next_line = getline(a:lnum+1)
     if next_line =~ '}.*{'
+      call s:log(a:lnum, '1.1')
       " assert(where_it_ends < a:lnum+1)
       let decr = len(substitute(matchstr(next_line, '^[^{]*'), '[^}]', '', 'g'))
-            \ + len(substitute(getline('.'), '[^}]', '', 'g'))
+            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
       return s:DecrFoldLevel(a:lnum, decr)
     endif
   endif
@@ -113,6 +144,7 @@ function! lh#c#fold#expr(lnum)
   " Case: opening, but started earlier
   " -> already opened -> keep fold level
   if a:lnum != where_it_starts && line =~ '{[^}]*$'
+    call s:log(a:lnum, '2')
     return s:KeepFoldLevel(a:lnum)
   endif
 
@@ -122,17 +154,23 @@ function! lh#c#fold#expr(lnum)
   let incr = len(substitute(line, '[^{]', '', 'g'))
   let decr = len(substitute(line, '[^}]', '', 'g'))
   if incr > decr
+    call s:log(a:lnum, '3.1')
     return s:IncrFoldLevel(a:lnum, incr-decr)
   elseif decr > incr
+    call s:log(a:lnum, '3.2')
     if a:lnum != where_it_ends
+      call s:log(a:lnum, '3.2.1')
       " Wait till the last moment!
       return s:KeepFoldLevel(a:lnum)
     else
+      call s:log(a:lnum, '3.2.2')
       return s:DecrFoldLevel(a:lnum, decr-incr)
     endif
   else
+    call s:log(a:lnum, '3.3')
     " This is where we can detect instructions spawning on several lines
     if line =~ '{.*}'
+      call s:log(a:lnum, '3.3.1')
       " first case: oneliner that cannot be folded => we left it as it is
       if     a:lnum == where_it_starts && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
       elseif a:lnum == where_it_starts                            | return s:IncrFoldLevel(a:lnum, 1)
@@ -141,73 +179,6 @@ function! lh#c#fold#expr(lnum)
     endif
     return s:KeepFoldLevel(a:lnum)
   endif
-
-  " ##################################################
-  throw "nothing after !!!"
-  " Has the instruction started earlier ?
-  " => Use the same fold level. Only the first line determines where it starts
-  let where_it_starts = b:fold_data_begin[a:lnum]
-  if where_it_starts != a:lnum
-    " If we are on a "where_it_ends" line, return "s1" if the line matches {}
-    let where_it_ends = b:fold_data_end[a:lnum]
-    if a:lnum == where_it_ends && getline(where_it_ends) =~ '}'
-      return s:DecrFoldLevel(a:lnum, 1)
-    endif
-    " Otherwise, we are in a multiline declaration that has started earlier
-    return s:KeepFoldLevel(a:lnum)
-  endif
-  " @post: no {, }, ; in [fold_begin, a:lnum -1]
-  let lines = getline(where_it_starts, a:lnum - 1)
-  if join(lines, ' ') =~ '[{}]'
-    echomsg "Unexpected case!"
-    return s:KeepFoldLevel(a:lnum)
-  endif
-
-  " Special case: "} catch|else|... {"
-  " TODO: use the s:opt_show_if_and_else() option
-  " -> We check the next line to see whether it closes something before opening
-  "  something new
-  if a:lnum < line('$')
-    let line = getline(a:lnum+1)
-    if line =~ '}.*{'
-      return s:DecrFoldLevel(a:lnum, len(substitute(matchstr(line, '^[^{]*'), '[^}]', '', 'g'))
-            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g')))
-      " return 's'.len(substitute(matchstr(line, '^[^{]*'), '[^}]', '', 'g'))
-    endif
-  endif
-  " Otherwise, this is a new instruction, check where it ends
-  let where_it_ends = s:WhereInstructionEnds(a:lnum)
-
-
-  let line = getline(where_it_ends)
-  " "} ... {" -> "{"  // the return of the s:opt_show_if_and_else()
-  let line = substitute(line, '^[^{]*}\ze.*{', '', '')
-  let incr = len(substitute(line, '[^{]', '', 'g'))
-  let decr = len(substitute(line, '[^}]', '', 'g'))
-  if incr > decr
-    return s:IncrFoldLevel(a:lnum, incr-decr)
-    " return "a".(incr-decr)
-  elseif decr > incr
-    if a:lnum != where_it_ends
-      " Wait till the last moment!
-      return s:KeepFoldLevel(a:lnum)
-    else
-      return s:DecrFoldLevel(a:lnum, decr-incr)
-      " return "s".(decr-incr)
-    endif
-  else
-    " This is where we can detect instructions spawning on several lines
-    if line =~ '{.*}'
-      " first case: oneliner that cannot be folded => we left it as it is
-      if     a:lnum == where_it_starts && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
-      elseif a:lnum == where_it_starts                            | return s:IncrFoldLevel(a:lnum, 1)
-      elseif a:lnum == where_it_ends                              | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
-      endif
-    endif
-    return s:KeepFoldLevel(a:lnum)
-    " return "="
-  endif
-  
 endfunction
 
 " Function: lh#c#fold#text()                              {{{2
@@ -316,7 +287,22 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
+" Function: s:ResizeCache()                               {{{2
+function! s:ResizeCache()
+  let missing = line('$') - len(b:fold_levels) + 1
+  if missing > 0
+    let to_be_appended = repeat([0], missing)
+    let b:fold_levels     += to_be_appended
+    let b:fold_data_begin += to_be_appended
+    let b:fold_data_end   += to_be_appended
+  endif
+  " @post len(*) == line('$') + 1
+endfunction
+
 " Function: s:WhereInstructionEnds()                      {{{2
+" Given a line number, search for something that indicates the end of a
+" instruction => ; , {, }
+" TODO: Handle special case: "do { ... }\nwhile()\n;"
 function! s:WhereInstructionEnds(lnum)
   let last_line = line('$')
   let lnum = a:lnum
@@ -328,18 +314,6 @@ function! s:WhereInstructionEnds(lnum)
     endif
     let lnum += 1
   endwhile
-
-  " "} ... {" case
-  if a:lnum < lnum && getline(lnum) =~ '}.*{'
-    let lnum =- 1
-  endif
-
-  " Precautionary move: we clear begin info for the next line
-  if lnum <= last_line
-    let b:fold_data_begin[lnum+1] = lnum+1
-  else
-    let lnum -= 1
-  endif
 
   " assert(lnum <= last_line)
   let l = a:lnum
@@ -415,6 +389,9 @@ endfunction
 " @pre len(b:fold_levels) == line('$')+1
 function! s:IncrFoldLevel(lnum, nb)
   let b:fold_levels[a:lnum] = b:fold_levels[a:lnum-1] + a:nb
+  if s:verbose
+    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].'gt buffer='.bufnr('%')
+  endif
   return '>'.b:fold_levels[a:lnum]
 endfunction
 
@@ -423,6 +400,9 @@ endfunction
 " @pre len(b:fold_levels) == line('$')+1
 function! s:DecrFoldLevel(lnum, nb)
   let b:fold_levels[a:lnum] =  max([b:fold_levels[a:lnum-1]- a:nb, 0])
+  if s:verbose
+    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.(b:fold_levels[a:lnum]+1).'lt buffer='.bufnr('%')
+  endif
   return '<'.(b:fold_levels[a:lnum]+1)
 endfunction
 
@@ -431,6 +411,9 @@ endfunction
 " @pre len(b:fold_levels) == line('$')+1
 function! s:KeepFoldLevel(lnum)
   let b:fold_levels[a:lnum] = b:fold_levels[a:lnum-1]
+  if s:verbose
+    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].' buffer='.bufnr('%')
+  endif
   return b:fold_levels[a:lnum]
 endfunction
 
