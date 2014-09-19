@@ -258,7 +258,7 @@ function! s:WhereInstructionEnds(lnum)
   while lnum <= last_line
     " Where the instruction started
     let b:fold_data_begin[lnum] = a:lnum
-    if getline(lnum) =~ '[{};]\|^#\|^\s*\(public\|private\|protected\):'
+    if getline(lnum) =~ '[{}]\|^#\|^\s*\(public\|private\|protected\):\|;\s*$'
       break
     endif
     let lnum += 1
