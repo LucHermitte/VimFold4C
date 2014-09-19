@@ -76,6 +76,7 @@ command! -b -nargs=0 ShowInstrBegin call s:ShowInstrBegin()
 " Script Data                                    {{{2
 let b:fold_data_begin = {}
 let b:fold_data_end   = {}
+let b:fold_levels     = []
 
 
 "------------------------------------------------------------------------
