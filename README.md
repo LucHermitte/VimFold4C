@@ -3,23 +3,32 @@ VimFold4C
 
 Vim fold plugin for C &amp; C++ (and similar langages)
 
-Unlike folding on syntax or or indent, this script tries to correctly detect
+Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
 The foldtext displayed will also try to be as pertinent as possible:
 - Correctly indented
-- Template parameters may be discarded if they make the line too long
+- Template parameters may be discarded if they induce a foldtext line which is too long for the windows width
 - Strip spaces in parenthesis, and eventually parameters when lines are too
   longs)
-- Strip scopes:: (optional)
+- Strip `scopes::` (optional)
+
+
+## Note
+In order to keep the plugin reactive, I had to introduce a few hacks that
+diminish the precision of the incremental algorithm used to detect fold
+boudaries.  
+As a consequence, sometimes lines are folded in a very strange way.  
+In order to fix it, use `zx` or `zX` to reset all fold boundaries.
 
 
 ## Options
 
-### How to set them
+### How to set them (syntax)
 
 You can set local or global options to tune the behaviour of this fold-plugin.
 ```vim
+" In the .vimrc
 let g:fold_options = {
    \ 'show_if_and_else': 1,
    \ 'strip_template_argurments': 1,
@@ -100,14 +109,28 @@ However, I'm unlikelly to handle specials cases in those languages.
 ## TO DO
 There is still a lot to be done:
 
-- Correctly handle comments for fold boundaries detection
-- Test, Test, and re-test!
-- Possibly fold a logging line spanning of several lines (cout, printf,
-  log(stuff << stuff)
-- Fold visibilities
-- Fold Includes
-- Fold #if
-- Test with C++11 lambdas
+- [optional] fold a logging line spanning of several lines (`cout`, `printf`,
+  `log(stuff << stuff)`
+- [optional] Fold visibilities
+- Fold `#include`s
+- Fold `#if`
+- Comments
+  - Correctly handle comments for fold boundaries detection
+  - [optional] when there is a leading comment, add a summary at the end of the
+    fold text
+  - [optional] support a policy for comments handling (integrated to the
+    following fold, independent fold, not folded)
+  - use @doxygen tags to build comments foldtext
+  - File headers shall have a special treatment -> detect
+    copyrights/licence/... to build the foldtext
+- Tests
+  - Test, Test, and re-test!
+  - Test with C++11 lambdas
+- Control statements
+  - `switch`/`case`
+    - increment foldlevel for every `case`
+    - [optional] merge `case`s that aren't separated by a `break;`
+  - `do { } while();` requires a specific handling
 
 ## History
 - A long time ago (~2001), Johannes Zellner published a first folding plugin

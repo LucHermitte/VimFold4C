@@ -23,14 +23,28 @@
 "
 " Todo:
 " There is still a lot to be done
-" - Correctly handle comments for fold boundaries detection
-" - Test, Test, and re-test!
-" - Possibly fold a logging line spanning of several lines (cout, printf,
+" - [optional] fold a logging line spanning of several lines (cout, printf,
 "   log(stuff << stuff)
-" - Fold visibilities
-" - Fold Includes
+" - [optional] Fold visibilities
+" - Fold #includes
 " - Fold #if
-" - Test with C++11 lambdas
+" - Comments
+"   - Correctly handle comments for fold boundaries detection
+"   - [optional] when there is a leading comment, add a summary at the end of the
+"     fold text
+"   - [optional] support a policy for comments handling (integrated to the
+"     following fold, independent fold, not folded)
+"   - use @doxygen tags to build comments foldtext
+"   - File headers shall have a special treatment -> detect
+"     copyrights/licence/... to build the foldtext
+" - Tests
+"   - Test, Test, and re-test!
+"   - Test with C++11 lambdas
+" - Control statements
+"   - switch/case
+"     - increment foldlevel for every case (switch)
+"     - [optional] merge cases that aren't separated by a "break;"
+"   - "do { } while();" requires a specific handling
 "------------------------------------------------------------------------
 " History:
 " - A long time ago (~2001), Johannes Zellner published a first folding plugin
@@ -80,9 +94,12 @@ let b:fold_data_begin = range(0, line('$'))
 let b:fold_data_end   = range(0, line('$'))
 let b:fold_levels     = []
 
+" Mappings {{{1
 nnoremap <silent> zx :call lh#c#fold#clear('zx')<cr>
 nnoremap <silent> zX :call lh#c#fold#clear('zX')<cr>
 
+" To help debug
+" nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- '.string(b:fold_levels[(line('.')-1):line('.')])<CR>
 
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
