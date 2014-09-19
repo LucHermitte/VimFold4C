@@ -93,8 +93,8 @@ let b:fold_data_end   = deepcopy(b:fold_data_begin)
 let b:fold_levels     = deepcopy(b:fold_data_begin)
 
 " Mappings {{{1
-nnoremap <silent> zx :call lh#c#fold#clear('zx')<cr>
-nnoremap <silent> zX :call lh#c#fold#clear('zX')<cr>
+nnoremap <silent> <buffer> zx :call lh#c#fold#clear('zx')<cr>
+nnoremap <silent> <buffer> zX :call lh#c#fold#clear('zX')<cr>
 
 " To help debug
 nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- foldlevels:'.string(b:fold_levels[(line('.')-1):line('.')]).' -- @'.line('.').' -- [beg,end]:['.b:fold_data_begin[line('.')].','.b:fold_data_end[line('.')].']'<CR>

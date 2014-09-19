@@ -123,6 +123,13 @@ void control_statements() {
         act;
     }
 
+    for (std::size_t i=0, N=42 ;
+            i!=N ;
+            ++i)
+    {
+        act;
+    }
+
     // switch
     switch(expr){
         case c1:
