@@ -74,7 +74,7 @@ endfunction
 " levels from one call to the other.
 " It means sometimes we have to refresh everything
 function! lh#c#fold#expr(lnum)
-  " Resize b:fold_levels array to have as many lines as the buffer
+  " Resize b:fold_* arrays to have as many lines as the buffer
   if len(b:fold_levels) <= line('$')
     let b:fold_data_begin += range(len(b:fold_data_begin), line('$'))
     let b:fold_data_end   += range(len(b:fold_data_end), line('$'))
@@ -85,9 +85,9 @@ function! lh#c#fold#expr(lnum)
   " => Use the same fold level. Only the first line determines where it starts
   let where_it_starts = b:fold_data_begin[a:lnum]
   if where_it_starts != a:lnum
-    " If we are on a "where_it_ends" line, return s1 if the line matches {}
+    " If we are on a "where_it_ends" line, return "s1" if the line matches {}
     let where_it_ends = b:fold_data_end[a:lnum]
-    if a:lnum == where_it_ends && getline(where_it_ends) =~ '{\s*}'
+    if a:lnum == where_it_ends && getline(where_it_ends) =~ '}'
       return s:DecrFoldLevel(a:lnum, 1)
     endif
     " Otherwise, we are in a multiline declaration that has started earlier
@@ -133,10 +133,11 @@ function! lh#c#fold#expr(lnum)
     endif
   else
     " This is where we can detect instructions spawning on several lines
-    " For now, we only handle "function()\n{}"
-    if line =~ '{\s*}'
-      if     a:lnum == where_it_starts | return s:IncrFoldLevel(a:lnum, 1)
-      elseif a:lnum == where_it_ends   | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
+    if line =~ '{.*}'
+      " first case: oneliner that cannot be folded => we left it as it is
+      if     a:lnum == where_it_starts && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
+      elseif a:lnum == where_it_starts                            | return s:IncrFoldLevel(a:lnum, 1)
+      elseif a:lnum == where_it_ends                              | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
       endif
     endif
     return s:KeepFoldLevel(a:lnum)

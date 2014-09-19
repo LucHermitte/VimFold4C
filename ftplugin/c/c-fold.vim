@@ -99,7 +99,8 @@ nnoremap <silent> zx :call lh#c#fold#clear('zx')<cr>
 nnoremap <silent> zX :call lh#c#fold#clear('zX')<cr>
 
 " To help debug
-" nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- '.string(b:fold_levels[(line('.')-1):line('.')])<CR>
+nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- foldlevels:'.string(b:fold_levels[(line('.')-1):line('.')]).' -- @'.line('.').' -- [beg,end]:['.b:fold_data_begin[line('.')].','.b:fold_data_end[line('.')].']'<CR>
+
 
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
