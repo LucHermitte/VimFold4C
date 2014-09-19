@@ -12,39 +12,11 @@ let s:k_version = 304
 " Description:
 "       Folding for C and C++
 "
-"       Unlike folding on syntax or or indent, this script tries to correctly
-"       detect the fold boundaries.
+" Unlike folding on syntax or on indent, this script tries to correctly detect
+" the fold boundaries, and to display comprehensible foldtext.
 "
-"       The foldtext displayed will also try to be as pertinent as possible:
-"       - Correctly indented
-"       - Template parameters may be discarded if they make the line too long
-"       - Strip spaces in parenthesis, and eventually parameters when lines are
-"       too longs)
-"       - Strip scopes:: (optional)
+" See README.md for more information
 "
-" Todo:
-" There is still a lot to be done
-" - [optional] fold a logging line spanning of several lines (cout, printf,
-"   log(stuff << stuff)
-" - [optional] Fold visibilities
-" - Fold #if
-" - Comments
-"   - Correctly handle comments for fold boundaries detection
-"   - [optional] when there is a leading comment, add a summary at the end of the
-"     fold text
-"   - [optional] support a policy for comments handling (integrated to the
-"     following fold, independent fold, not folded)
-"   - use @doxygen tags to build comments foldtext
-"   - File headers shall have a special treatment -> detect
-"     copyrights/licence/... to build the foldtext
-" - Tests
-"   - Test, Test, and re-test!
-"   - Test with C++11 lambdas
-" - Control statements
-"   - switch/case
-"     - increment foldlevel for every case (switch)
-"     - [optional] merge cases that aren't separated by a "break;"
-"   - "do { } while();" requires a specific handling
 "------------------------------------------------------------------------
 " History:
 " - A long time ago (~2001), Johannes Zellner published a first folding plugin

@@ -12,6 +12,7 @@ The foldtext displayed will also try to be as pertinent as possible:
 - Strip spaces in parenthesis, and eventually parameters when lines are too
   longs)
 - Strip `scopes::` (optional)
+- Multiple subsequent (consecutive ?) `#include` will be condensed into one line
 
 
 ## Note
@@ -109,9 +110,13 @@ However, I'm unlikelly to handle specials cases in those languages.
 ## TO DO
 There is still a lot to be done:
 
-- [optional] fold a logging line spanning of several lines (`cout`, `printf`,
+- [optional] fold a logging line spanning on several lines (`cout`, `printf`,
   `log(stuff << stuff)`
 - [optional] Fold visibilities
+- `#include`
+  - [optional] cut the foldtext line when it's too long to fit
+  - [optional] strip the dirname of each included file to build the foldtext
+    line.
 - Fold `#if`
 - Comments
   - Correctly handle comments for fold boundaries detection
@@ -130,6 +135,8 @@ There is still a lot to be done:
     - increment foldlevel for every `case`
     - [optional] merge `case`s that aren't separated by a `break;`
   - `do { } while();` requires a specific handling
+- Technicalities
+  - merge all those `b:fold_*` internal variables
 
 ## History
 - A long time ago (~2001), Johannes Zellner published a first folding plugin
