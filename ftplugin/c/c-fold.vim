@@ -5,7 +5,8 @@
 "		<URL:http://github.com/LucHermitte/VimFold4C>
 " License:      GPLv3 with exceptions
 "               <URL:http://code.google.com/p/lh-vim/wiki/License>
-" Version:	3.0.3
+" Version:	3.0.4
+let s:k_version = 304
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -26,7 +27,6 @@
 " - [optional] fold a logging line spanning of several lines (cout, printf,
 "   log(stuff << stuff)
 " - [optional] Fold visibilities
-" - Fold #includes
 " - Fold #if
 " - Comments
 "   - Correctly handle comments for fold boundaries detection
@@ -66,7 +66,6 @@ set cpo&vim
 "------------------------------------------------------------------------
 
 " Avoid global reinclusion {{{1
-let s:k_version = 1
 if &cp || (exists("g:loaded_c_fold")
       \ && (g:loaded_c_fold >= s:k_version)
       \ && !exists('g:force_reload_c_fold'))
@@ -91,6 +90,7 @@ command! -b -nargs=0 ShowInstrBegin call s:ShowInstrBegin()
 let b:fold_data_begin = repeat([0], 1+line('$'))
 let b:fold_data_end   = deepcopy(b:fold_data_begin)
 let b:fold_levels     = deepcopy(b:fold_data_begin)
+let b:fold_context    = repeat([''], 1+line('$'))
 
 " Mappings {{{1
 nnoremap <silent> <buffer> zx :call lh#c#fold#clear('zx')<cr>

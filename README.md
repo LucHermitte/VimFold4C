@@ -112,7 +112,6 @@ There is still a lot to be done:
 - [optional] fold a logging line spanning of several lines (`cout`, `printf`,
   `log(stuff << stuff)`
 - [optional] Fold visibilities
-- Fold `#include`s
 - Fold `#if`
 - Comments
   - Correctly handle comments for fold boundaries detection

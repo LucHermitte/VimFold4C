@@ -3,7 +3,8 @@
 " File:         addons/VimFold4C/autoload/lh/c/fold.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/VimFold4C>
-" Version:	3.0.3
+" Version:	3.0.4
+let s:k_version = 304
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -21,7 +22,6 @@ set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version                                {{{2
-let s:k_version = 1
 function! lh#c#fold#version()
   return s:k_version
 endfunction
@@ -108,9 +108,7 @@ function! lh#c#fold#expr(lnum)
   endif
 
 
-
   " 2- Then return what must be
-  "
   " Case: "} catch|else|... {"
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
@@ -121,17 +119,37 @@ function! lh#c#fold#expr(lnum)
       " assert(where_it_ends < a:lnum+1)
       let decr = len(substitute(matchstr(next_line, '^[^{]*'), '[^}]', '', 'g'))
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
+      let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
     endif
   endif
 
   let line = getline(where_it_ends)
+
+  " Case: Includes
+  if line =~ '^#include'
+    let b:fold_context[a:lnum] = 'include'
+    if b:fold_context[a:lnum-1] != 'include'
+      let b:fold_context[where_it_starts : where_it_ends] 
+            \ = repeat[['include'], 1 + where_it_ends - where_it_starts]
+      return s:IncrFoldLevel(a:lnum, 1)
+    endif
+
+    let next_line = getline(s:WhereInstructionEnds(a:lnum+1))
+    if next_line !~ '^#include'
+      return s:DecrFoldLevel(a:lnum, 1)
+    else
+      return s:KeepFoldLevel(a:lnum)
+    endif
+  endif
+  " Clear include contexte
+  let b:fold_context[a:lnum] = ''
+
   " Case: opening, but started earlier
   " -> already opened -> keep fold level
   if a:lnum != where_it_starts && line =~ '{[^}]*$'
     return s:KeepFoldLevel(a:lnum)
   endif
-
 
   " "} ... {" -> "{"  // the return of the s:opt_show_if_and_else()
   let line = substitute(line, '^[^{]*}\ze.*{', '', '')
@@ -161,14 +179,24 @@ endfunction
 
 " Function: lh#c#fold#text()               {{{2
 function! CFoldText_(lnum)
-  let ts = s:Build_ts()
-  let lnum = a:lnum
-  let lastline = b:fold_data_end[a:lnum]
-  let line = ''
+  let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
 
-  let lnum = s:NextNonCommentNonBlank(lnum, s:opt_fold_blank())
+  " Case: includes 
+  if b:fold_context[a:lnum] == 'include'
+    let includes = []
+    let lastline = line('$')
+    while lnum <= lastline && b:fold_context[lnum] == 'include'
+      let includes += [matchstr(getline(lnum), '["<]\zs.*\ze[">]')]
+      let lnum = s:NextNonCommentNonBlank(lnum+1, s:opt_fold_blank())
+    endwhile
+    return '#include '.join(includes, ' ')
+  endif
 
   " Loop for all the lines in the fold                {{{3
+  let ts = s:Build_ts()
+  let line = ''
+
+  let lastline = b:fold_data_end[a:lnum]
   while lnum <= lastline
     let current = getline(lnum)
     " Foldmarks will get ignored
@@ -261,6 +289,7 @@ function! lh#c#fold#clear(cmd)
   let b:fold_data_begin = repeat([0], 1+line('$'))
   let b:fold_data_end   = copy(b:fold_data_begin)
   let b:fold_levels     = copy(b:fold_data_begin)
+  let b:fold_context    = repeat([''], 1+line('$'))
   exe 'normal! '.a:cmd
 endfunction
 
@@ -274,6 +303,7 @@ function! s:ResizeCache()
     let b:fold_levels     += to_be_appended
     let b:fold_data_begin += to_be_appended
     let b:fold_data_end   += to_be_appended
+    let b:fold_context    += repeat([''], missing)
   endif
   " @post len(*) == line('$') + 1
 endfunction
