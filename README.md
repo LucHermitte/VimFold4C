@@ -1,7 +1,7 @@
 VimFold4C
 =========
 
-Vim fold plugin for C &amp; C++ (and similar langages)
+Reactive vim fold plugin for C &amp; C++ (and similar languages)
 
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
@@ -21,7 +21,7 @@ The foldtext displayed will also try to be as pertinent as possible:
 ## Note
 In order to keep the plugin reactive, I had to introduce a few hacks that
 diminish the precision of the incremental algorithm used to detect fold
-boudaries.  
+boundaries.  
 As a consequence, sometimes lines are folded in a very strange way.  
 In order to fix it, use `zx` or `zX` to reset all fold boundaries.
 
@@ -91,7 +91,7 @@ ActivateAddons lh-cpp
 ActivateAddons VimFold4C
 ```
 
-If you really want to stick with dependencies unware plugins that cannot
+If you really want to stick with dependencies unaware plugins that cannot
 support subversion repositories like Vundle, you can install vim-script mirror
 of lh-vim-lib on github.
 ```vim
@@ -108,7 +108,7 @@ runtime ftplugin/c/c-fold.vim
 
 from a C#/Java/... ftplugin should do the trick.
 
-However, I'm unlikelly to handle specials cases in those languages.
+However, I'm unlikely to handle specials cases in those languages.
 
 ## TO DO
 There is still a lot to be done:
@@ -151,5 +151,5 @@ There is still a lot to be done:
 - Eventually I got tired of the slow execution times and moved back to
   foldmethod=indent.
 
-- Here is a new (2014) version almost entirelly rewritten, that I hope will
+- Here is a new (2014) version almost entirely rewritten, that I hope will
   be fast enough to be usable.
