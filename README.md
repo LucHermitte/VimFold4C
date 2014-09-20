@@ -122,7 +122,6 @@ There is still a lot to be done:
   - [optional] cut the foldtext line when it's too long to fit
   - [optional] strip the dirname of each included file to build the foldtext
     line.
-- Fold `#if`
 - Comments
   - Correctly handle comments for fold boundaries detection
   - [optional] when there is a leading comment, add a summary at the end of the
