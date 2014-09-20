@@ -62,7 +62,12 @@ command! -b -nargs=0 ShowInstrBegin call s:ShowInstrBegin()
 let b:fold_data_begin = repeat([0], 1+line('$'))
 let b:fold_data_end   = deepcopy(b:fold_data_begin)
 let b:fold_levels     = deepcopy(b:fold_data_begin)
-let b:fold_context    = repeat([''], 1+line('$'))
+silent! unlet b:fold_context
+let b:fold_context    = lh#stack#new_list(1+line('$'))
+
+function! b:fold_context.is(idx, ctx) dict
+  return !self.empty(a:idx) && self.top(a:idx) == a:ctx
+endfunction
 
 " Mappings {{{1
 nnoremap <silent> <buffer> zx :call lh#c#fold#clear('zx')<cr>

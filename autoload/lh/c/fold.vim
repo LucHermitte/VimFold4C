@@ -91,6 +91,7 @@ endfunction
 " This way instead of having something recursive to the extreme, we cache fold
 " levels from one call to the other.
 " It means sometimes we have to refresh everything with zx/zX
+let g:errors = []
 function! lh#c#fold#expr(lnum)
   " 0- Resize b:fold_* arrays to have as many lines as the buffer
   call s:ResizeCache()
@@ -119,7 +120,7 @@ function! lh#c#fold#expr(lnum)
       " assert(where_it_ends < a:lnum+1)
       let decr = len(substitute(matchstr(next_line, '^[^{]*'), '[^}]', '', 'g'))
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
-      let b:fold_context[a:lnum] = ''
+      "let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
     elseif next_line =~ '^#\s*elif' 
       return s:DecrFoldLevel(a:lnum, 1)
@@ -130,10 +131,11 @@ function! lh#c#fold#expr(lnum)
 
   " Case: #include
   if line =~ '^#\s*include'
-    let b:fold_context[a:lnum] = 'include'
-    if b:fold_context[a:lnum-1] != 'include'
-      let b:fold_context[where_it_starts : where_it_ends] 
-            \ = repeat[['include'], 1 + where_it_ends - where_it_starts]
+    call b:fold_context.push(a:lnum, 'include')
+    if !b:fold_context.is(a:lnum-1, 'include')
+      call b:fold_context.push(
+            \ [where_it_starts , where_it_ends] ,
+            \ = 'include')
       return s:IncrFoldLevel(a:lnum, 1)
     endif
 
@@ -144,8 +146,7 @@ function! lh#c#fold#expr(lnum)
       return s:KeepFoldLevel(a:lnum)
     endif
   endif
-  " Clear include contexte
-  let b:fold_context[a:lnum] = ''
+  " assert !fold_context.is(a:lnum, 'include')
 
   " Case: #if & co
   if line =~ '^#\s*\(if\|else\|elif\)'
@@ -191,10 +192,10 @@ function! CFoldText_(lnum)
   let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
 
   " Case: #include  {{{3
-  if b:fold_context[a:lnum] == 'include'
+  if b:fold_context.is(a:lnum, 'include')
     let includes = []
     let lastline = line('$')
-    while lnum <= lastline && b:fold_context[lnum] == 'include'
+    while lnum <= lastline && b:fold_context.is(lnum, 'include')
       let includes += [matchstr(getline(lnum), '["<]\zs.*\ze[">]')]
       let lnum = s:NextNonCommentNonBlank(lnum+1, s:opt_fold_blank())
     endwhile
@@ -312,7 +313,7 @@ function! lh#c#fold#clear(cmd)
   let b:fold_data_begin = repeat([0], 1+line('$'))
   let b:fold_data_end   = copy(b:fold_data_begin)
   let b:fold_levels     = copy(b:fold_data_begin)
-  let b:fold_context    = repeat([''], 1+line('$'))
+  let b:fold_context    . clear(1+line('$'))
   exe 'normal! '.a:cmd
 endfunction
 
@@ -326,7 +327,7 @@ function! s:ResizeCache()
     let b:fold_levels     += to_be_appended
     let b:fold_data_begin += to_be_appended
     let b:fold_data_end   += to_be_appended
-    let b:fold_context    += repeat([''], missing)
+    let b:fold_context    .expand(missing)
   endif
   " @post len(*) == line('$') + 1
 endfunction
@@ -355,7 +356,13 @@ function! s:WhereInstructionEnds(lnum)
     " Where the instruction started
     let b:fold_data_begin[lnum] = a:lnum
     let line = s:CleanLine(getline(lnum))
-    if line =~ '[{}]\|^#\|^\s*\(public\|private\|protected\):\|;\s*$'
+    if b:fold_context.is(lnum, "dowhile")
+      if line =~ '^#\|;\s*$'
+        break
+      elseif lnum < last_line
+        call b:fold_context.push(lnum+1, "dowhile")
+      endif
+    elseif line =~ '[{}]\|^#\|^\s*\<\(public\|private\|protected\):\|;\s*$'
       break
     endif
     let lnum += 1
