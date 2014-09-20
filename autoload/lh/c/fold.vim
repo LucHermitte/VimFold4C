@@ -109,7 +109,7 @@ function! lh#c#fold#expr(lnum)
 
 
   " 2- Then return what must be
-  " Case: "} catch|else|... {"
+  " Case: "} catch|else|... {" & "#elif"
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
   "  something new
@@ -121,13 +121,15 @@ function! lh#c#fold#expr(lnum)
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
       let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
+    elseif next_line =~ '^#\s*elif' 
+      return s:DecrFoldLevel(a:lnum, 1)
     endif
   endif
 
   let line = getline(where_it_ends)
 
-  " Case: Includes
-  if line =~ '^#include'
+  " Case: #include
+  if line =~ '^#\s*include'
     let b:fold_context[a:lnum] = 'include'
     if b:fold_context[a:lnum-1] != 'include'
       let b:fold_context[where_it_starts : where_it_ends] 
@@ -136,7 +138,7 @@ function! lh#c#fold#expr(lnum)
     endif
 
     let next_line = getline(s:WhereInstructionEnds(a:lnum+1))
-    if next_line !~ '^#include'
+    if next_line !~ '^#\s*include'
       return s:DecrFoldLevel(a:lnum, 1)
     else
       return s:KeepFoldLevel(a:lnum)
@@ -144,6 +146,13 @@ function! lh#c#fold#expr(lnum)
   endif
   " Clear include contexte
   let b:fold_context[a:lnum] = ''
+
+  " Case: #if & co
+  if line =~ '^#\s*\(if\|else\|elif\)'
+    return s:IncrFoldLevel(a:lnum, 1)
+  elseif  line =~ '^#\s*endif'
+    return s:DecrFoldLevel(a:lnum, 1)
+  endif
 
   " Case: opening, but started earlier
   " -> already opened -> keep fold level
@@ -181,7 +190,7 @@ endfunction
 function! CFoldText_(lnum)
   let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
 
-  " Case: includes 
+  " Case: #include  {{{3
   if b:fold_context[a:lnum] == 'include'
     let includes = []
     let lastline = line('$')
@@ -192,9 +201,13 @@ function! CFoldText_(lnum)
     return '#include '.join(includes, ' ')
   endif
 
+  " Case: #if & co {{{3
+  " No need: What follows does the work 
+
   " Loop for all the lines in the fold                {{{3
   let ts = s:Build_ts()
   let line = ''
+  let in_macro_ctx = 0
 
   let lastline = b:fold_data_end[a:lnum]
   while lnum <= lastline
@@ -204,7 +217,17 @@ function! CFoldText_(lnum)
     " Get rid of C comments
     let current = substitute(current, '/\*.*\*/', '', 'g')
 
-    if current =~ '[^:]:[^:]'
+    if current =~ '^#\s*\(if\|elif\).*\\$'
+      let in_macro_ctx = 1
+      let current = substitute(current, '\s*\\$', '', '')
+      let break = 0
+      let lastline = line('$')
+    elseif in_macro_ctx
+      let in_macro_ctx = !empty(current) && current[-1] == '\\'
+      let current = substitute(current, '\s*\\$', '', '')
+      let break = ! in_macro_ctx
+
+    elseif current =~ '[^:]:[^:]'
       " class XXX : ancestor
       let current = substitute(current, '\([^:]\):[^:].*$', '\1', 'g')
       let break = 1

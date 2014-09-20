@@ -6,6 +6,8 @@ Vim fold plugin for C &amp; C++ (and similar langages)
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
+## Features
+
 The foldtext displayed will also try to be as pertinent as possible:
 - Correctly indented
 - Template parameters may be discarded if they induce a foldtext line which is too long for the windows width
@@ -13,6 +15,7 @@ The foldtext displayed will also try to be as pertinent as possible:
   longs)
 - Strip `scopes::` (optional)
 - Multiple subsequent (consecutive ?) `#include` will be condensed into one line
+- `#if` & co are folded
 
 
 ## Note
@@ -113,6 +116,8 @@ There is still a lot to be done:
 - [optional] fold a logging line spanning on several lines (`cout`, `printf`,
   `log(stuff << stuff)`
 - [optional] Fold visibilities
+- [optional] Merge function parameters when they induce fold lines too long to
+  fit
 - `#include`
   - [optional] cut the foldtext line when it's too long to fit
   - [optional] strip the dirname of each included file to build the foldtext

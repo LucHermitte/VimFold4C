@@ -217,3 +217,28 @@ int typical_main (int argc, char **argv)
     }
     return EXIT_FAILURE;
 }
+
+
+// From http://stackoverflow.com/questions/8316765/vim-foldexpr-for-including-multiline-function-signatures/
+void ClassName::FunctionName(LongType1 LongArgument1,
+                             LongType2 LongArgument2,
+                             LongType3 LongArgument3) {
+  ...
+}
+
+void if_def() {
+#if defined(foo) \
+    && define(fii)
+    bla;
+#  ifdef zzz
+    zzz;
+#  endif
+    bli;
+#elif defined(bar)
+    blie;
+#  ifndef eee
+    eee;
+#  endif
+    bla;
+#endif
+}
