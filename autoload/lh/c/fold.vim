@@ -362,11 +362,7 @@ function! s:WhereInstructionEnds(lnum)
   endwhile
 
   " assert(lnum <= last_line)
-  let l = a:lnum
-  while l <= lnum
-    let b:fold_data_end[l] = lnum
-    let l += 1
-  endwhile
+  let b:fold_data_end[(a:lnum):lnum] = repeat([lnum], lnum-a:lnum+1)
   
   return lnum
 endfunction
@@ -398,17 +394,6 @@ function! s:NextNonCommentNonBlank(lnum, or_blank)
   return lnum
 endfunction
 
-" Function: s:NextNonCommentNonBlank(lnum) {{{2
-" Comments => ignore them:
-" the fold level is determined by the code that follows
-function! s:NextNonCommentNonBlank(lnum, or_blank)
-  let lnum = a:lnum
-  let lastline = line('$')
-  while (lnum <= lastline) && s:IsACommentLine(lnum, a:or_blank)
-    let lnum += 1
-  endwhile
-  return lnum
-endfunction
 " Function: s:Build_ts()                   {{{2
 function! s:Build_ts()
   if !exists('s:ts_d') || (s:ts_d != &ts)
