@@ -3,8 +3,8 @@
 " File:         addons/VimFold4C/autoload/lh/c/fold.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/VimFold4C>
-" Version:	3.0.4
-let s:k_version = 304
+" Version:	3.0.5
+let s:k_version = 305
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -109,7 +109,7 @@ function! lh#c#fold#expr(lnum)
 
 
   " 2- Then return what must be
-  " Case: "} catch|else|... {" & "#elif"
+  " Case: "} catch|else|... {" & "#elif" & "#else"
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
   "  something new
@@ -121,8 +121,10 @@ function! lh#c#fold#expr(lnum)
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
       let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
-    elseif next_line =~ '^#\s*elif' 
-      return s:DecrFoldLevel(a:lnum, 1)
+    elseif next_line =~ '^#\s*\(elif\|else\)' 
+      let decr = 1
+            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
+      return s:DecrFoldLevel(a:lnum, decr)
     endif
   endif
 
@@ -147,17 +149,23 @@ function! lh#c#fold#expr(lnum)
   " Clear include contexte
   let b:fold_context[a:lnum] = ''
 
-  " Case: #if & co
-  if line =~ '^#\s*\(if\|else\|elif\)'
-    return s:IncrFoldLevel(a:lnum, 1)
-  elseif  line =~ '^#\s*endif'
-    return s:DecrFoldLevel(a:lnum, 1)
+  " Opening things ?
+  " The foldlevel increase can be done only at the start of the instruction
+  if a:lnum == where_it_starts
+    if line =~ '^#\s*if'
+      return s:IncrFoldLevel(a:lnum, 1)
+    endif
+  elseif line =~ '{[^}]*$'
+    " Case: opening, but started earlier
+    " -> already opened -> keep fold level
+    return s:KeepFoldLevel(a:lnum)
   endif
 
-  " Case: opening, but started earlier
-  " -> already opened -> keep fold level
-  if a:lnum != where_it_starts && line =~ '{[^}]*$'
-    return s:KeepFoldLevel(a:lnum)
+  " "#else", "#elif", "#endif"
+  if line =~ '^#\s*\(else\|elif\)'
+    return s:IncrFoldLevel(a:lnum, 1)
+  elseif  line =~ '^#\s*endif' && a:lnum == where_it_ends
+    return s:DecrFoldLevel(a:lnum, 1)
   endif
 
   " "} ... {" -> "{"  // the return of the s:opt_show_if_and_else()

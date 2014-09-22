@@ -3,8 +3,8 @@
 " File:         addons/VimFold4C/mkVba/mk-vimfold4c.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://code.google.com/p/lh-vim/>
-let s:version = '3.0.4'
-" Version:      3.0.4
+let s:version = '3.0.5'
+" Version:      3.0.5
 " Created:      18th Sep 2014
 " Last Update:  $Date$
 "------------------------------------------------------------------------

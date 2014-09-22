@@ -241,4 +241,45 @@ void if_def() {
 #  endif
     bla;
 #endif
+
+
+#ifdef FOO
+    if (foo)
+    {
+        ct();
+    }
+#elif defined(BAR)
+    if (bar)
+    {
+        ct();
+    }
+#else
+    if (toto)
+    {
+        ct();
+    }
+#endif
+
+
+
+
+#ifdef FOO
+    if (foo)
+    {
+        ct();
+    }
+
+#elif defined(BAR)
+    if (bar)
+    {
+        ct();
+    }
+
+#else
+    if (toto)
+    {
+        ct();
+    }
+
+#endif
 }
