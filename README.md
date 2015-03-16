@@ -6,6 +6,8 @@ Reactive vim fold plugin for C &amp; C++ (and similar languages)
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
+[![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+
 ## Features
 
 The foldtext displayed will also try to be as pertinent as possible:
