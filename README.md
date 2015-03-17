@@ -74,16 +74,16 @@ the `syntax` one ?).
 ## Requirements / Installation
 
 This fold-plugin requires vim 7+ and 
-[lh-vim-lib](http://code.google.com/p/lh-vim/wiki/lhVimLib).
+[lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib).
 
 The easiest way to install this plugin is with
 [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
 plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
 that support vim-addon-files -- as this script specifies its
-[dependencies](https://github.com/LucHermitte/VimFold4C/blob/master/VimFold4C-addon-info.txt)
+[dependencies](https://github.com/LucHermitte/VimFold4C/blob/master/addon-info.txt)
 in vim-addon-file format.
 
-When installing [lh-cpp](http://code.google.com/p/lh-vim/wiki/lhCpp) with
+When installing [lh-cpp](http://github.com/LucHermitte/lh-cpp) with
 [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
 plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
 this fold-plugin will get automatically installed.
@@ -93,11 +93,9 @@ ActivateAddons lh-cpp
 ActivateAddons VimFold4C
 ```
 
-If you really want to stick with dependencies unaware plugins that cannot
-support subversion repositories like Vundle, you can install vim-script mirror
-of lh-vim-lib on github.
+With Vundle/NeoBundle
 ```vim
-Bundle 'vim-scripts/lh-vim-lib'                                          
+Bundle 'LucHermitte/lh-vim-lib'
 Bundle 'LucHermitte/VimFold4C'
 ```
 
