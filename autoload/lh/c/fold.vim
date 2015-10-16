@@ -1,15 +1,14 @@
 "=============================================================================
-" $Id$
 " File:         addons/VimFold4C/autoload/lh/c/fold.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://github.com/LucHermitte/VimFold4C>
-" Version:	3.0.5
-let s:k_version = 305
-" Created:	06th Jan 2002
+"               <URL:http://github.com/LucHermitte/VimFold4C>
+" Version:      3.0.6
+let s:k_version = 306
+" Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
 "       Core functions for VimFold4C
-" 
+"
 "------------------------------------------------------------------------
 " Installation:
 "       Drop this file into {rtp}/addons/VimFold4C/autoload/lh/c
@@ -30,7 +29,7 @@ endfunction
 if !exists('s:verbose')
   let s:verbose = 0
 endif
-function! lh#c#fold#verbose(...)
+function! lh#c#fold#verbose(...) abort
   if a:0 > 0 | let s:verbose = a:1 | endif
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
@@ -91,11 +90,11 @@ endfunction
 " This way instead of having something recursive to the extreme, we cache fold
 " levels from one call to the other.
 " It means sometimes we have to refresh everything with zx/zX
-function! lh#c#fold#expr(lnum)
-  " 0- Resize b:fold_* arrays to have as many lines as the buffer
+function! lh#c#fold#expr(lnum) abort
+  " 0- Resize b:fold_* arrays to have as many lines as the buffer {{{4
   call s:ResizeCache()
 
-  " 1- First obtain the current fold boundaries
+  " 1- First obtain the current fold boundaries {{{4
   let where_it_starts = b:fold_data_begin[a:lnum]
   if where_it_starts == 0
     " it's possible the boundaries was never known => compute thems
@@ -108,8 +107,8 @@ function! lh#c#fold#expr(lnum)
   endif
 
 
-  " 2- Then return what must be
-  " Case: "} catch|else|... {" & "#elif" & "#else"
+  " 2- Then return what must be {{{4
+  " Case: "} catch|else|... {" & "#elif" & "#else" {{{5
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
   "  something new
@@ -121,38 +120,58 @@ function! lh#c#fold#expr(lnum)
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
       let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
-    elseif next_line =~ '^#\s*\(elif\|else\)' 
+    elseif next_line =~ '^\s*#\s*\(elif\|else\)'
       let decr = 1
             \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
       return s:DecrFoldLevel(a:lnum, decr)
     endif
   endif
 
-  let line = getline(where_it_ends)
+  " The lines to analyze {{{5
+  let lines = getline(where_it_starts, where_it_ends)
+  let line  = getline(where_it_ends)
 
-  " Case: #include
-  if line =~ '^#\s*include'
+  " Case: #include {{{5
+  if line =~ '^\s*#\s*include'
     let b:fold_context[a:lnum] = 'include'
-    if b:fold_context[a:lnum-1] != 'include'
-      let b:fold_context[where_it_starts : where_it_ends] 
-            \ = repeat[['include'], 1 + where_it_ends - where_it_starts]
+    if     b:fold_context[a:lnum-1] == '#if'
+      " Override include context
+      let b:fold_context[a:lnum] = b:fold_context[a:lnum-1]
+      return s:KeepFoldLevel(a:lnum)
+    elseif b:fold_context[a:lnum-1] != 'include'
+      let b:fold_context[where_it_starts : where_it_ends]
+            \ = repeat(['include'], 1 + where_it_ends - where_it_starts)
       return s:IncrFoldLevel(a:lnum, 1)
     endif
 
-    let next_line = getline(s:WhereInstructionEnds(a:lnum+1))
-    if next_line !~ '^#\s*include'
+    let where_next_ends = s:WhereInstructionEnds(a:lnum+1)
+    let next_lines = getline(a:lnum+1, where_next_ends)
+    if match(next_lines, '^\s*#\s*include') == -1
       return s:DecrFoldLevel(a:lnum, 1)
     else
+      let g:where_it_starts = where_it_starts
+      let g:where_next_ends = where_next_ends
+      let b:fold_context[where_it_starts : where_next_ends]
+            \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
       return s:KeepFoldLevel(a:lnum)
     endif
+  elseif b:fold_context[a:lnum] == 'include' && a:lnum == where_it_ends
+      return s:DecrFoldLevel(a:lnum, 1)
   endif
-  " Clear include contexte
-  let b:fold_context[a:lnum] = ''
 
-  " Opening things ?
+  " Clear include context {{{5
+  " But maintain #if context and ignore #endif context
+  if     b:fold_context[a:lnum-1] == '#if' && b:fold_context[a:lnum] != '#endif'
+    let b:fold_context[a:lnum] = b:fold_context[a:lnum-1]
+  elseif b:fold_context[a:lnum] != '#endif'
+    let b:fold_context[a:lnum] = ''
+  endif
+
+  " Case: Opening things ? {{{5
   " The foldlevel increase can be done only at the start of the instruction
   if a:lnum == where_it_starts
-    if line =~ '^#\s*if'
+    if line =~ '^\s*#\s*if'
+      let b:fold_context[a:lnum] = '#if'
       return s:IncrFoldLevel(a:lnum, 1)
     endif
   elseif line =~ '{[^}]*$'
@@ -161,17 +180,33 @@ function! lh#c#fold#expr(lnum)
     return s:KeepFoldLevel(a:lnum)
   endif
 
-  " "#else", "#elif", "#endif"
-  if line =~ '^#\s*\(else\|elif\)'
+  " Case: "#else", "#elif", "#endif" {{{5
+  if line =~ '^\s*#\s*\(else\|elif\)'
     return s:IncrFoldLevel(a:lnum, 1)
-  elseif  line =~ '^#\s*endif' && a:lnum == where_it_ends
-    return s:DecrFoldLevel(a:lnum, 1)
+  elseif  match(lines, '^\s*#\s*endif') >= 0
+    if a:lnum == where_it_ends
+      let b:fold_context[a:lnum] = '#endif'
+      return s:DecrFoldLevel(a:lnum, 1)
+    else
+      " Register where the #endif ends
+      let b:fold_context[where_it_starts : where_it_ends]
+            \ = repeat(['#endif'], 1 + where_it_ends - where_it_starts)
+    endif
+  endif
+  if b:fold_context[a:lnum] == '#endif' && a:lnum == where_it_ends
+      return s:DecrFoldLevel(a:lnum, 1)
   endif
 
-  " "} ... {" -> "{"  // the return of the s:opt_show_if_and_else()
+  " Case: "} ... {" -> "{"  // the return of the s:opt_show_if_and_else() {{{5
   let line = substitute(line, '^[^{]*}\ze.*{', '', '')
   let incr = len(substitute(line, '[^{]', '', 'g'))
+
+  let lines = getline(b:fold_data_instr_begin[a:lnum], where_it_ends)
+  " TODO: support multiline comments
+  call map(lines, "substitute(s:CleanLine(v:val), '^[^{]*}\\ze.*{', '', '')")
+  let line = join(lines, '')
   let decr = len(substitute(line, '[^}]', '', 'g'))
+
   if incr > decr
     return s:IncrFoldLevel(a:lnum, incr-decr)
   elseif decr > incr
@@ -195,7 +230,7 @@ function! lh#c#fold#expr(lnum)
 endfunction
 
 " Function: lh#c#fold#text()               {{{2
-function! CFoldText_(lnum)
+function! CFoldText_(lnum) abort
   let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
 
   " Case: #include  {{{3
@@ -210,7 +245,7 @@ function! CFoldText_(lnum)
   endif
 
   " Case: #if & co {{{3
-  " No need: What follows does the work 
+  " No need: What follows does the work
 
   " Loop for all the lines in the fold                {{{3
   let ts = s:Build_ts()
@@ -269,8 +304,8 @@ function! CFoldText_(lnum)
   endwhile
 
   " Strip whatever follows "case xxx:" and "default:" {{{3
-  let line = substitute(line, 
-	\ '^\(\s*\%(case\s\+.\{-}[^:]:\_[^:]\|default\s*:\)\).*', '\1', 'g')
+  let line = substitute(line,
+        \ '^\(\s*\%(case\s\+.\{-}[^:]:\_[^:]\|default\s*:\)\).*', '\1', 'g')
 
   " Strip spaces within parenthesis                   {{{3
   let line = substitute(line, '\s\{2,}', ' ', 'g')
@@ -286,18 +321,18 @@ function! CFoldText_(lnum)
 
   " Strip template parameters                         {{{3
   if strlen(line) > (winwidth(winnr()) - &foldcolumn)
-	\ && s:opt_strip_template_argurments() && line =~ '\s*template\s*<'
+        \ && s:opt_strip_template_argurments() && line =~ '\s*template\s*<'
     let c0 = stridx(line, '<') + 1 | let lvl = 1
     let c = c0
     while c > 0
       let c = match(line, '[<>]', c+1)
       if     line[c] == '<'
-	let lvl += 1
-      elseif line[c] == '>' 
-	if lvl == 1 | break | endif
-	let lvl -= 1
+        let lvl += 1
+      elseif line[c] == '>'
+        if lvl == 1 | break | endif
+        let lvl -= 1
       endif
-    endwhile 
+    endwhile
     " TODO: doesn't work with template specialization
     let line = strpart(line, 0, c0) . '...' . strpart(line, c)
   endif
@@ -309,32 +344,43 @@ function! CFoldText_(lnum)
   " return lines . line
 endfunction
 
-function! lh#c#fold#text()
+function! lh#c#fold#text() abort
   " return getline(v:foldstart) " When there is a bug, use this one
   return CFoldText_(v:foldstart)
 endfunction
 
 " Function: lh#c#fold#clear(cmd)           {{{2
-function! lh#c#fold#clear(cmd)
+" b:fold_data_begin: Block of non empty lines before the instruction
+"                    New line => new block
+"                    TODO: merge several comment blocks ?
+" b:fold_data_end:   Will contain all empty lines  that follow
+"                    TODO: special case: do {...} while ();
+"
+" + special case: #includes
+function! lh#c#fold#clear(cmd) abort
   call lh#c#fold#verbose( s:verbose) " clear signs
-  let b:fold_data_begin = repeat([0], 1+line('$'))
-  let b:fold_data_end   = copy(b:fold_data_begin)
-  let b:fold_levels     = copy(b:fold_data_begin)
-  let b:fold_context    = repeat([''], 1+line('$'))
-  exe 'normal! '.a:cmd
+  let b:fold_data_begin       = repeat([0], 1+line('$'))
+  let b:fold_data_end         = copy(b:fold_data_begin)
+  let b:fold_data_instr_begin = copy(b:fold_data_begin)
+  let b:fold_data_instr_end   = copy(b:fold_data_begin)
+  let b:fold_levels           = copy(b:fold_data_begin)
+  let b:fold_context          = repeat([''], 1+line('$'))
+  silent exe 'normal! '.a:cmd
 endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 " Function: s:ResizeCache()                {{{2
-function! s:ResizeCache()
+function! s:ResizeCache() abort
   let missing = line('$') - len(b:fold_levels) + 1
   if missing > 0
     let to_be_appended = repeat([0], missing)
-    let b:fold_levels     += to_be_appended
-    let b:fold_data_begin += to_be_appended
-    let b:fold_data_end   += to_be_appended
-    let b:fold_context    += repeat([''], missing)
+    let b:fold_levels           += to_be_appended
+    let b:fold_data_begin       += to_be_appended
+    let b:fold_data_end         += to_be_appended
+    let b:fold_data_instr_begin += to_be_appended
+    let b:fold_data_instr_end   += to_be_appended
+    let b:fold_context          += repeat([''], missing)
   endif
   " @post len(*) == line('$') + 1
 endfunction
@@ -342,7 +388,7 @@ endfunction
 " Function: s:CleanLine(line)              {{{2
 " clean from comments
 " TODO: merge with similar functions in lh-cpp and lh-dev
-function! s:CleanLine(line)
+function! s:CleanLine(line) abort
   " 1- remove strings
   let line = substitute(a:line, '".\{-}[^\\]"', '', 'g')
   " 2- remove C Comments
@@ -356,27 +402,41 @@ endfunction
 " Given a line number, search for something that indicates the end of a
 " instruction => ; , {, }
 " TODO: Handle special case: "do { ... }\nwhile()\n;"
-function! s:WhereInstructionEnds(lnum)
+function! s:WhereInstructionEnds(lnum) abort
   let last_line = line('$')
   let lnum = a:lnum
+  let last = lnum
   while lnum <= last_line
     " Where the instruction started
     let b:fold_data_begin[lnum] = a:lnum
-    let line = s:CleanLine(getline(lnum))
-    if line =~ '[{}]\|^#\|^\s*\(public\|private\|protected\):\|;\s*$'
+    let line = getline(lnum)
+    if line =~ '^\s*$'
       break
+    else
+      let line = s:CleanLine(line)
+      if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
+        let last = lnum
+        while lnum < last_line && getline(lnum+1) =~ '^\s*$'
+          let lnum += 1
+        endwhile
+        break
+      endif
     endif
     let lnum += 1
   endwhile
 
   " assert(lnum <= last_line)
-  let b:fold_data_end[(a:lnum):lnum] = repeat([lnum], lnum-a:lnum+1)
-  
+  " let b:fold_data_instr_begin[(a:lnum):lnum] = repeat([a:lnum], lnum-a:lnum+1)
+  let b:fold_data_instr_begin[(a:lnum):lnum] = map(b:fold_data_instr_begin[(a:lnum):lnum], 'min([v:val==0 ? (a:lnum) : v:val, a:lnum])')
+  " let b:fold_data_instr_begin[(a:lnum):lnum] = repeat([a:lnum], lnum-a:lnum+1)
+  let b:fold_data_instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
+  let b:fold_data_end[(a:lnum):lnum]         = repeat([lnum], lnum-a:lnum+1)
+
   return lnum
 endfunction
 
 " Function: s:IsACommentLine(lnum)         {{{2
-function! s:IsACommentLine(lnum, or_blank)
+function! s:IsACommentLine(lnum, or_blank) abort
   let line = getline(a:lnum)
   if line =~ '^\s*//'. (a:or_blank ? '\|^\s*$' : '')
     " C++ comment line / empty line => continue
@@ -393,7 +453,7 @@ endfunction
 " Function: s:NextNonCommentNonBlank(lnum) {{{2
 " Comments => ignore them:
 " the fold level is determined by the code that follows
-function! s:NextNonCommentNonBlank(lnum, or_blank)
+function! s:NextNonCommentNonBlank(lnum, or_blank) abort
   let lnum = a:lnum
   let lastline = line('$')
   while (lnum <= lastline) && s:IsACommentLine(lnum, a:or_blank)
@@ -403,7 +463,7 @@ function! s:NextNonCommentNonBlank(lnum, or_blank)
 endfunction
 
 " Function: s:Build_ts()                   {{{2
-function! s:Build_ts()
+function! s:Build_ts() abort
   if !exists('s:ts_d') || (s:ts_d != &ts)
     let s:ts = repeat(' ', &ts)
     let s:ts_d = &ts
@@ -412,24 +472,24 @@ function! s:Build_ts()
 endfunction
 
 " Function: s:ShowInstrBegin()             {{{2
-function! s:ShowInstrBegin()
-  sign define Fold   text=~~ texthl=Identifier
-  
+function! s:ShowInstrBegin() abort
+  silent sign define Fold   text=~~ texthl=Identifier
+
   let bufnr = bufnr('%')
   silent! exe 'sign unplace * buffer='.bufnr
   let boi = lh#list#unique_sort(values(b:fold_data_begin))
   for l in boi
-    exe 'sign place '.l.' line='.l.' name=Fold buffer='.bufnr
+    silent exe 'sign place '.l.' line='.l.' name=Fold buffer='.bufnr
   endfor
 endfunction
 
 " Function: s:IncrFoldLevel(lnum)          {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
-function! s:IncrFoldLevel(lnum, nb)
+function! s:IncrFoldLevel(lnum, nb) abort
   let b:fold_levels[a:lnum] = b:fold_levels[a:lnum-1] + a:nb
   if s:verbose
-    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].'gt buffer='.bufnr('%')
+    silent exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].'gt buffer='.bufnr('%')
   endif
   return '>'.b:fold_levels[a:lnum]
 endfunction
@@ -437,10 +497,10 @@ endfunction
 " Function: s:DecrFoldLevel(lnum)          {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
-function! s:DecrFoldLevel(lnum, nb)
+function! s:DecrFoldLevel(lnum, nb) abort
   let b:fold_levels[a:lnum] =  max([b:fold_levels[a:lnum-1]- a:nb, 0])
   if s:verbose
-    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.(b:fold_levels[a:lnum]+1).'lt buffer='.bufnr('%')
+    silent exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.(b:fold_levels[a:lnum]+1).'lt buffer='.bufnr('%')
   endif
   return '<'.(b:fold_levels[a:lnum]+1)
 endfunction
@@ -448,10 +508,10 @@ endfunction
 " Function: s:KeepFoldLevel(lnum)          {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
-function! s:KeepFoldLevel(lnum)
+function! s:KeepFoldLevel(lnum) abort
   let b:fold_levels[a:lnum] = b:fold_levels[a:lnum-1]
   if s:verbose
-    exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].' buffer='.bufnr('%')
+    silent exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].' buffer='.bufnr('%')
   endif
   return b:fold_levels[a:lnum]
 endfunction

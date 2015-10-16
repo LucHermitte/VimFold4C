@@ -1,16 +1,15 @@
 "=============================================================================
-" $Id$
 " File:         addons/VimFold4C/mkVba/mk-vimfold4c.vim           {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://code.google.com/p/lh-vim/>
-let s:version = '3.0.5'
-" Version:      3.0.5
+let s:version = '306'
+" Version:      3.0.6
 " Created:      18th Sep 2014
 " Last Update:  $Date$
 "------------------------------------------------------------------------
 " Description:
 "       «description»
-" 
+"
 "------------------------------------------------------------------------
 " Installation:
 "       Drop this file into {rtp}/addons/VimFold4C/mkVba
@@ -23,7 +22,7 @@ let s:version = '3.0.5'
 
 let s:project = 'vimfold4c'
 cd <sfile>:p:h
-try 
+try
   let save_rtp = &rtp
   let &rtp = expand('<sfile>:p:h:h').','.&rtp
   exe '36,$MkVimball! '.s:project.'-'.s:version
