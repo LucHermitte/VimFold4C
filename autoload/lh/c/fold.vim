@@ -149,8 +149,6 @@ function! lh#c#fold#expr(lnum) abort
     if match(next_lines, '^\s*#\s*include') == -1
       return s:DecrFoldLevel(a:lnum, 1)
     else
-      let g:where_it_starts = where_it_starts
-      let g:where_next_ends = where_next_ends
       let b:fold_context[where_it_starts : where_next_ends]
             \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
       return s:KeepFoldLevel(a:lnum)
@@ -426,9 +424,7 @@ function! s:WhereInstructionEnds(lnum) abort
   endwhile
 
   " assert(lnum <= last_line)
-  " let b:fold_data_instr_begin[(a:lnum):lnum] = repeat([a:lnum], lnum-a:lnum+1)
   let b:fold_data_instr_begin[(a:lnum):lnum] = map(b:fold_data_instr_begin[(a:lnum):lnum], 'min([v:val==0 ? (a:lnum) : v:val, a:lnum])')
-  " let b:fold_data_instr_begin[(a:lnum):lnum] = repeat([a:lnum], lnum-a:lnum+1)
   let b:fold_data_instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
   let b:fold_data_end[(a:lnum):lnum]         = repeat([lnum], lnum-a:lnum+1)
 
