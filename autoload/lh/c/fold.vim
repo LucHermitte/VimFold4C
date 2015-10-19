@@ -1,9 +1,9 @@
 "=============================================================================
-" File:         addons/VimFold4C/autoload/lh/c/fold.vim           {{{1
+" File:         autoload/lh/c/fold.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-" Version:      3.0.6
-let s:k_version = 306
+" Version:      3.0.7
+let s:k_version = 307
 " Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -196,13 +196,13 @@ function! lh#c#fold#expr(lnum) abort
   endif
 
   " Case: "} ... {" -> "{"  // the return of the s:opt_show_if_and_else() {{{5
-  let line = substitute(line, '^[^{]*}\ze.*{', '', '')
-  let incr = len(substitute(line, '[^{]', '', 'g'))
-
-  let lines = getline(b:fold_data_instr_begin[a:lnum], where_it_ends)
+  let instr_start = b:fold_data_instr_begin[a:lnum]
+  let lines = getline(instr_start, where_it_ends)
   " TODO: support multiline comments
   call map(lines, "substitute(s:CleanLine(v:val), '^[^{]*}\\ze.*{', '', '')")
+
   let line = join(lines, '')
+  let incr = len(substitute(line, '[^{]', '', 'g'))
   let decr = len(substitute(line, '[^}]', '', 'g'))
 
   if incr > decr
@@ -218,9 +218,9 @@ function! lh#c#fold#expr(lnum) abort
     " This is where we can detect instructions spawning on several lines
     if line =~ '{.*}'
       " first case: oneliner that cannot be folded => we left it as it is
-      if     a:lnum == where_it_starts && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
-      elseif a:lnum == where_it_starts                            | return s:IncrFoldLevel(a:lnum, 1)
-      elseif a:lnum == where_it_ends                              | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
+      if     a:lnum == instr_start && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
+      elseif a:lnum == instr_start                            | return s:IncrFoldLevel(a:lnum, 1)
+      elseif a:lnum == where_it_ends                          | return s:DecrFoldLevel(a:lnum, 1) " Note: this case cannot happen
       endif
     endif
     return s:KeepFoldLevel(a:lnum)

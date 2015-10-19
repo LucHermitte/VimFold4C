@@ -1,22 +1,14 @@
 "=============================================================================
-" File:         addons/VimFold4C/mkVba/mk-vimfold4c.vim           {{{1
+" File:         mkVba/mk-vimfold4c.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://code.google.com/p/lh-vim/>
-let s:version = '306'
-" Version:      3.0.6
+"               <URL:http://github.com/LucHermitte/VimFold4C>
+let s:version = '307'
+" Version:      3.0.7
 " Created:      18th Sep 2014
-" Last Update:  $Date$
+" Last Update:  19th Oct 2015
 "------------------------------------------------------------------------
 " Description:
-"       «description»
-"
-"------------------------------------------------------------------------
-" Installation:
-"       Drop this file into {rtp}/addons/VimFold4C/mkVba
-"       Requires Vim7+
-"       «install details»
-" History:      «history»
-" TODO:         «missing features»
+"       Helper script to build vimfold4c tarball archive
 " }}}1
 "=============================================================================
 
