@@ -2,8 +2,8 @@
 " File:         autoload/lh/c/fold.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-" Version:      3.0.7
-let s:k_version = 307
+" Version:      3.0.8
+let s:k_version = 308
 " Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -33,21 +33,11 @@ function! lh#c#fold#verbose(...) abort
   if a:0 > 0 | let s:verbose = a:1 | endif
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
-    sign define Fold1   text=1  texthl=Identifier
-    sign define Fold2   text=2  texthl=Identifier
-    sign define Fold3   text=3  texthl=Identifier
-    sign define Fold4   text=4  texthl=Identifier
-    sign define Fold5   text=5  texthl=Identifier
-    sign define Fold1gt text=>1 texthl=Identifier
-    sign define Fold2gt text=>2 texthl=Identifier
-    sign define Fold3gt text=>3 texthl=Identifier
-    sign define Fold4gt text=>4 texthl=Identifier
-    sign define Fold5gt text=>5 texthl=Identifier
-    sign define Fold1lt text=<1 texthl=Identifier
-    sign define Fold2lt text=<2 texthl=Identifier
-    sign define Fold3lt text=<3 texthl=Identifier
-    sign define Fold4lt text=<4 texthl=Identifier
-    sign define Fold5lt text=<5 texthl=Identifier
+    for i in range(1, 9)
+      exe 'sign define Fold'.i.'   text=|'.i.'  texthl=Identifier'
+      exe 'sign define Fold'.i.'gt text=>'.i.' texthl=Identifier'
+      exe 'sign define Fold'.i.'lt text=<'.i.' texthl=Identifier'
+    endfor
   endif
   exe 'sign unplace * buffer='.bufnr('%')
   return s:verbose
@@ -108,6 +98,14 @@ function! lh#c#fold#expr(lnum) abort
 
 
   " 2- Then return what must be {{{4
+  let instr_start = b:fold_data_instr_begin[a:lnum]
+  let instr_lines = getline(instr_start, where_it_ends)
+  " TODO: support multiline comments
+  call map(instr_lines, "s:CleanLine(v:val)")
+  let instr_line = join(instr_lines, '')
+  " let incr = len(substitute(instr_line, '[^{]', '', 'g'))
+  " let decr = len(substitute(instr_line, '[^}]', '', 'g'))
+
   " Case: "} catch|else|... {" & "#elif" & "#else" {{{5
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
@@ -117,12 +115,12 @@ function! lh#c#fold#expr(lnum) abort
     if next_line =~ '}.*{'
       " assert(where_it_ends < a:lnum+1)
       let decr = len(substitute(matchstr(next_line, '^[^{]*'), '[^}]', '', 'g'))
-            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
+            \ + len(substitute(instr_line, '[^}]', '', 'g'))
       let b:fold_context[a:lnum] = ''
       return s:DecrFoldLevel(a:lnum, decr)
     elseif next_line =~ '^\s*#\s*\(elif\|else\)'
       let decr = 1
-            \ + len(substitute(getline(a:lnum), '[^}]', '', 'g'))
+            \ + len(substitute(instr_line, '[^}]', '', 'g'))
       return s:DecrFoldLevel(a:lnum, decr)
     endif
   endif
@@ -196,12 +194,10 @@ function! lh#c#fold#expr(lnum) abort
   endif
 
   " Case: "} ... {" -> "{"  // the return of the s:opt_show_if_and_else() {{{5
-  let instr_start = b:fold_data_instr_begin[a:lnum]
-  let lines = getline(instr_start, where_it_ends)
   " TODO: support multiline comments
-  call map(lines, "substitute(s:CleanLine(v:val), '^[^{]*}\\ze.*{', '', '')")
+  call map(instr_lines, "substitute(v:val, '^[^{]*}\\ze.*{', '', '')")
 
-  let line = join(lines, '')
+  let line = join(instr_lines, '')
   let incr = len(substitute(line, '[^{]', '', 'g'))
   let decr = len(substitute(line, '[^}]', '', 'g'))
 
@@ -356,14 +352,14 @@ endfunction
 "
 " + special case: #includes
 function! lh#c#fold#clear(cmd) abort
-  call lh#c#fold#verbose( s:verbose) " clear signs
+  call lh#c#fold#verbose(s:verbose) " clear signs
   let b:fold_data_begin       = repeat([0], 1+line('$'))
   let b:fold_data_end         = copy(b:fold_data_begin)
   let b:fold_data_instr_begin = copy(b:fold_data_begin)
   let b:fold_data_instr_end   = copy(b:fold_data_begin)
   let b:fold_levels           = copy(b:fold_data_begin)
   let b:fold_context          = repeat([''], 1+line('$'))
-  silent exe 'normal! '.a:cmd
+  exe 'normal! '.a:cmd
 endfunction
 
 "------------------------------------------------------------------------
@@ -405,8 +401,8 @@ function! s:WhereInstructionEnds(lnum) abort
   let lnum = a:lnum
   let last = lnum
   while lnum <= last_line
-    " Where the instruction started
-    let b:fold_data_begin[lnum] = a:lnum
+    "" Where the instruction started
+    " let b:fold_data_begin[lnum] = a:lnum
     let line = getline(lnum)
     if line =~ '^\s*$'
       break
@@ -425,7 +421,8 @@ function! s:WhereInstructionEnds(lnum) abort
 
   " assert(lnum <= last_line)
   let b:fold_data_instr_begin[(a:lnum):lnum] = map(b:fold_data_instr_begin[(a:lnum):lnum], 'min([v:val==0 ? (a:lnum) : v:val, a:lnum])')
-  let b:fold_data_instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
+  " let b:fold_data_instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
+  let b:fold_data_begin[(a:lnum):lnum]       = repeat([a:lnum], lnum-a:lnum+1)
   let b:fold_data_end[(a:lnum):lnum]         = repeat([lnum], lnum-a:lnum+1)
 
   return lnum

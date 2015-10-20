@@ -2,10 +2,10 @@
 " File:         mkVba/mk-vimfold4c.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-let s:version = '307'
-" Version:      3.0.7
+let s:version = '308'
+" Version:      3.0.8
 " Created:      18th Sep 2014
-" Last Update:  19th Oct 2015
+" Last Update:  20th Oct 2015
 "------------------------------------------------------------------------
 " Description:
 "       Helper script to build vimfold4c tarball archive
