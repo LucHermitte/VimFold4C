@@ -2,10 +2,10 @@
 " File:         mkVba/mk-vimfold4c.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-let s:version = '308'
-" Version:      3.0.8
+let s:version = '309'
+" Version:      3.0.9
 " Created:      18th Sep 2014
-" Last Update:  20th Oct 2015
+" Last Update:  18th Nov 2015
 "------------------------------------------------------------------------
 " Description:
 "       Helper script to build vimfold4c tarball archive
@@ -17,7 +17,7 @@ cd <sfile>:p:h
 try
   let save_rtp = &rtp
   let &rtp = expand('<sfile>:p:h:h').','.&rtp
-  exe '36,$MkVimball! '.s:project.'-'.s:version
+  exe '27,$MkVimball! '.s:project.'-'.s:version
   set modifiable
   set buftype=
 finally
@@ -25,6 +25,7 @@ finally
 endtry
 finish
 README.md
-VimFold4C-addon-info.txt
+addon-info.json
 autoload/lh/c/fold.vim
 ftplugin/c/c-fold.vim
+VimFlavor
