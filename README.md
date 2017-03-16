@@ -6,7 +6,7 @@ Reactive vim fold plugin for C &amp; C++ (and similar languages)
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
-[![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Features
 
@@ -27,6 +27,14 @@ boundaries.
 As a consequence, sometimes lines are folded in a very strange way.  
 In order to fix it, use `zx` or `zX` to reset all fold boundaries.
 
+## Demo
+
+Here is a little screencast to see how things are displayed with VimFold4C.
+
+![VimFold4C demo](doc/screencast-vim-fold.gif "VimFold4C demo")
+
+Note: the code comes from unrelated
+[experiment of mine](https://github.com/LucHermitte/NamedParameter).
 
 ## Options
 
@@ -53,7 +61,8 @@ let b:fold_options = {
 ### Available options
 The options are:
 - `show_if_and_else` (which is currently hard-coded to _true_) requires to have
-  two folds on 
+  two folds on
+
 ```c
 if (foo) {
     foo_action();
@@ -73,7 +82,7 @@ the `syntax` one ?).
 
 ## Requirements / Installation
 
-This fold-plugin requires vim 7+ and 
+This fold-plugin requires vim 7+ and
 [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib).
 
 The easiest way to install this plugin is with
