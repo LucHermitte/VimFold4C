@@ -181,7 +181,15 @@ function! lh#c#fold#expr(lnum) abort
   " Case: Opening things ? {{{5
   " The foldlevel increase can be done only at the start of the instruction
   if a:lnum == where_it_starts
-    if line =~ '^\s*#\s*if'
+    if     line =~ '^\s*#\s*ifndef'
+      let symbol = matchstr(line, '^\s*#\s*ifndef\s\+\zs\S\+')
+      if (getline(a:lnum+1) !~ '^\s*#\s*define\s\+'.symbol) && empty(filter(b:fold_context[:a:lnum], 'v:val == "#if"'))
+        let b:fold_context[a:lnum] = '#if'
+        return s:IncrFoldLevel(a:lnum, 1)
+        " else: we ignore the first which is likelly an anti-reinclusion
+        " guard
+      endif
+    elseif line =~ '^\s*#\s*if'
       let b:fold_context[a:lnum] = '#if'
       return s:IncrFoldLevel(a:lnum, 1)
     endif
