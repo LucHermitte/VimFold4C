@@ -224,7 +224,7 @@ function! lh#c#fold#expr(lnum) abort
   let incr = len(substitute(line, '[^{]', '', 'g'))
   let decr = len(substitute(line, '[^}]', '', 'g'))
 
-  if incr > decr
+  if incr > decr  && a:lnum == where_it_starts
     return s:IncrFoldLevel(a:lnum, incr-decr)
   elseif decr > incr
     if a:lnum != where_it_ends
