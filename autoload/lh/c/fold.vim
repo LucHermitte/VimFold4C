@@ -20,16 +20,14 @@ let s:cpo_save=&cpo
 set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
-" # Version                                {{{2
+" # Version {{{2
 function! lh#c#fold#version()
   return s:k_version
 endfunction
 
-" # Debug                                  {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
-function! lh#c#fold#verbose(...) abort
+" # Debug   {{{2
+let s:verbose = get(s:, 'verbose', 0)
+function! lh#c#fold#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
@@ -43,13 +41,17 @@ function! lh#c#fold#verbose(...) abort
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#c#fold#debug(expr)
+function! lh#c#fold#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -75,7 +77,7 @@ function! s:opt_fold_blank() abort
 endfunction
 function! s:opt_max_foldline_length() abort
   " TODO: optimize this function call
-  let how = lh#option#get('fold_options.max_foldline_length', 1)
+  let how = lh#option#get('fold_options.max_foldline_length', 'win')
   if type(how) == type(42)
     return how - &foldcolumn
   elseif how =~ '\ctw\|textwidth'
@@ -237,10 +239,10 @@ function! lh#c#fold#expr(lnum) abort
 endfunction
 
 " Function: lh#c#fold#text()               {{{2
-function! CFoldText_(lnum) abort
+function! lh#c#fold#text_(lnum) abort
   let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
 
-  " Case: #include  {{{3
+  " Case: #include                                    {{{3
   if b:fold_context[a:lnum] == 'include'
     let includes = []
     let lastline = line('$')
@@ -251,7 +253,7 @@ function! CFoldText_(lnum) abort
     return '#include '.join(includes, ' ')
   endif
 
-  " Case: #if & co {{{3
+  " Case: #if & co                                    {{{3
   " No need: What follows does the work
 
   " Loop for all the lines in the fold                {{{3
@@ -344,8 +346,22 @@ function! CFoldText_(lnum) abort
     let line = strpart(line, 0, c0) . '...' . strpart(line, c)
   endif
 
+  " Replace tabs                                      {{{3
+  let line = substitute(line, "\t", ' ', 'g')
+
+  " Trim line if too long                             {{{3
+  if s:IsLineTooLong(line)
+    " TODO: factorise option fetching
+    let max_length = s:opt_max_foldline_length() - &foldcolumn
+    " TODO: implement a better heuristics that could recognize:
+    " - function declarations
+    " - function calls
+    " - initialization lists
+    let line = substitute(line, '\v^(.){'.(max_length-4).'}\zs.*', '....', '')
+  endif
+
   " Return the result                                 {{{3
-  return substitute(line, "\t", ' ', 'g')
+  return line
   " let lines = v:folddashes . '[' . (v:foldend - v:foldstart + 1) . ']'
   " let lines .= repeat(' ', 10 - strlen(lines))
   " return lines . line
@@ -353,7 +369,7 @@ endfunction
 
 function! lh#c#fold#text() abort
   " return getline(v:foldstart) " When there is a bug, use this one
-  return CFoldText_(v:foldstart)
+  return lh#c#fold#text_(v:foldstart)
 endfunction
 
 " Function: lh#c#fold#clear(cmd)           {{{2
@@ -525,7 +541,7 @@ endfunction
 
 " Function: s:IsLineTooLong(text)          {{{2
 function! s:IsLineTooLong(text) abort
-  return lh#encoding#strlen(line) > s:opt_max_foldline_length()
+  return lh#encoding#strlen(a:text) > s:opt_max_foldline_length()
 endfunction
 
 "------------------------------------------------------------------------
