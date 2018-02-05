@@ -45,7 +45,7 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 " In the .vimrc
 let g:fold_options = {
    \ 'show_if_and_else': 1,
-   \ 'strip_template_argurments': 1,
+   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
    \ }
 ```
@@ -53,7 +53,7 @@ or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
    \ 'show_if_and_else': 1,
-   \ 'strip_template_argurments': 1,
+   \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
    \ }
 ```
@@ -73,7 +73,7 @@ if (foo) {
 instead of the single fold we have when using `indent` _foldmethod_ (or was it
 the `syntax` one ?).
 
-- `strip_template_argurments` (default: _true_) strips template arguments from
+- `strip_template_arguments` (default: _true_) strips template arguments from
   the fold text generated if the text would be too long for the current window
   width
 

@@ -56,15 +56,15 @@ endfunction
 " # Options                                {{{2
 " let b/g:fold_options = {
       " \ 'show_if_and_else': 1,
-      " \ 'strip_template_argurments': 1,
+      " \ 'strip_template_arguments': 1,
       " \ 'strip_namespaces': 1,
       " \ 'fold_blank': 1
       " \ }
 function! s:opt_show_if_and_else()
   return lh#option#get('fold_options.show_if_and_else', 1)
 endfunction
-function! s:opt_strip_template_argurments()
-  return lh#option#get('fold_options.strip_template_argurments', 1)
+function! s:opt_strip_template_arguments()
+  return lh#option#get('fold_options.strip_template_arguments', 1)
 endfunction
 function! s:opt_strip_namespaces()
   return lh#option#get('fold_options.strip_namespaces', 1)
@@ -315,7 +315,7 @@ function! CFoldText_(lnum) abort
 
   " Strip template parameters                         {{{3
   if lh#encoding#strlen(line) > (winwidth(winnr()) - &foldcolumn)
-        \ && s:opt_strip_template_argurments() && line =~ '\s*template\s*<'
+        \ && s:opt_strip_template_arguments() && line =~ '\s*template\s*<'
     let c0 = stridx(line, '<') + 1 | let lvl = 1
     let c = c0
     while c > 0
