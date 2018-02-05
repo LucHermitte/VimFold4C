@@ -314,7 +314,7 @@ function! CFoldText_(lnum) abort
   let line = leading_spaces . line
 
   " Strip template parameters                         {{{3
-  if strlen(line) > (winwidth(winnr()) - &foldcolumn)
+  if lh#encoding#strlen(line) > (winwidth(winnr()) - &foldcolumn)
         \ && s:opt_strip_template_argurments() && line =~ '\s*template\s*<'
     let c0 = stridx(line, '<') + 1 | let lvl = 1
     let c = c0
@@ -510,6 +510,7 @@ function! s:KeepFoldLevel(lnum) abort
 endfunction
 
 "------------------------------------------------------------------------
+" }}}1
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:
