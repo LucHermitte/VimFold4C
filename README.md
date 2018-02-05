@@ -82,31 +82,37 @@ the `syntax` one ?).
 
 ## Requirements / Installation
 
-This fold-plugin requires vim 7+ and
-[lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib).
+  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib)
 
-The easiest way to install this plugin is with
-[vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
-plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
-that support vim-addon-files -- as this script specifies its
-[dependencies](https://github.com/LucHermitte/VimFold4C/blob/master/addon-info.txt)
-in vim-addon-file format.
+  * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-cpp. This is the preferred method because of the various dependencies.
+    ```vim
+    ActivateAddons VimFold4C
+    ```
 
-When installing [lh-cpp](http://github.com/LucHermitte/lh-cpp) with
-[vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or other
-plugin managers based on [vim-pi](https://bitbucket.org/vimcommunity/vim-pi),
-this fold-plugin will get automatically installed.
-```vim
-ActivateAddons lh-cpp
-" Or just this one (and soon as I register it in vim-pi):
-ActivateAddons VimFold4C
-```
+  * or with [vim-flavor](http://github.com/kana/vim-flavor) which also supports
+    dependencies:
+    ```
+    flavor 'LucHermitte/VimFold4C'
+    ```
 
-With Vundle/NeoBundle
-```vim
-Bundle 'LucHermitte/lh-vim-lib'
-Bundle 'LucHermitte/VimFold4C'
-```
+  * When installing [lh-cpp](http://github.com/LucHermitte/lh-cpp) with
+    [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), or
+    other plugin managers based on
+    [vim-pi](https://bitbucket.org/vimcommunity/vim-pi), or with
+    [vim-flavor](http://github.com/kana/vim-flavor) this fold-plugin will get
+    automatically installed.
+    ```vim
+    ActivateAddons lh-cpp
+    " Or just this one (and soon as I register it in vim-pi):
+    ActivateAddons VimFold4C
+    ```
+
+  * or with Vundle/NeoBundle (expecting I haven't forgotten anything):
+
+    ```vim
+    Bundle 'LucHermitte/lh-vim-lib'
+    Bundle 'LucHermitte/VimFold4C'
+    ```
 
 So far, it is only triggered for C and C++. It should be easy to use it from
 C#, Java, and other languages with C like syntax: a
