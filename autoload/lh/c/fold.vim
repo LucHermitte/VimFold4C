@@ -314,7 +314,7 @@ function! CFoldText_(lnum) abort
   let line = leading_spaces . line
 
   " Strip template parameters                         {{{3
-  if lh#encoding#strlen(line) > (winwidth(winnr()) - &foldcolumn)
+  if s:IsLineTooLong(line)
         \ && s:opt_strip_template_arguments() && line =~ '\s*template\s*<'
     let c0 = stridx(line, '<') + 1 | let lvl = 1
     let c = c0
@@ -507,6 +507,12 @@ function! s:KeepFoldLevel(lnum) abort
     silent exe 'sign place '.a:lnum.' line='.a:lnum.' name=Fold'.b:fold_levels[a:lnum].' buffer='.bufnr('%')
   endif
   return b:fold_levels[a:lnum]
+endfunction
+
+
+" Function: s:IsLineTooLong(text)          {{{2
+function! s:IsLineTooLong(text) abort
+  return lh#encoding#strlen(line) > (winwidth(winnr()) - &foldcolumn)
 endfunction
 
 "------------------------------------------------------------------------
