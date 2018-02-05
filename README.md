@@ -12,7 +12,7 @@ the fold boundaries.
 
 The foldtext displayed will also try to be as pertinent as possible:
 - Correctly indented
-- Template parameters may be discarded if they induce a foldtext line which is too long for the windows width
+- Template parameters may be discarded if they induce a foldtext line which is too long for the window width
 - Strip spaces in parenthesis, and eventually parameters when lines are too
   longs)
 - Strip `scopes::` (optional)
@@ -47,6 +47,7 @@ let g:fold_options = {
    \ 'show_if_and_else': 1,
    \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
+   \ 'max_foldline_length': 'win'
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
@@ -55,23 +56,27 @@ let b:fold_options = {
    \ 'show_if_and_else': 1,
    \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
+   \ 'max_foldline_length': 'win'
    \ }
 ```
 
 ### Available options
-The options are:
+The
+[options](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md) are:
+
 - `show_if_and_else` (which is currently hard-coded to _true_) requires to have
   two folds on
 
-```c
-if (foo) {
-    foo_action();
-} else {
-    bar_action();
-}
-```
-instead of the single fold we have when using `indent` _foldmethod_ (or was it
-the `syntax` one ?).
+    ```c
+    if (foo) {
+        foo_action();
+    } else {
+        bar_action();
+    }
+    ```
+
+    instead of the single fold we have when using `indent` _foldmethod_ (or was it
+    the `syntax` one ?).
 
 - `strip_template_arguments` (default: _true_) strips template arguments from
   the fold text generated if the text would be too long for the current window
@@ -79,6 +84,12 @@ the `syntax` one ?).
 
 - `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
   `boost::filesystem::` from the fold text generated.
+
+- `max_foldline_length` (default: _"win"_) specifies the maximum line length
+  of the fold text. The possibile values are: 
+  - _"win"_: stops at current window width
+  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
+  - number: hardcoded maximum number of characters to keep.
 
 ## Requirements / Installation
 

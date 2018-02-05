@@ -58,19 +58,32 @@ endfunction
       " \ 'show_if_and_else': 1,
       " \ 'strip_template_arguments': 1,
       " \ 'strip_namespaces': 1,
-      " \ 'fold_blank': 1
+      " \ 'fold_blank': 1,
+      " \ 'max_foldline_length': 'win'/'tw'/42
       " \ }
-function! s:opt_show_if_and_else()
+function! s:opt_show_if_and_else() abort
   return lh#option#get('fold_options.show_if_and_else', 1)
 endfunction
-function! s:opt_strip_template_arguments()
+function! s:opt_strip_template_arguments() abort
   return lh#option#get('fold_options.strip_template_arguments', 1)
 endfunction
-function! s:opt_strip_namespaces()
+function! s:opt_strip_namespaces() abort
   return lh#option#get('fold_options.strip_namespaces', 1)
 endfunction
-function! s:opt_fold_blank()
+function! s:opt_fold_blank() abort
   return lh#option#get('fold_options.fold_blank', 1)
+endfunction
+function! s:opt_max_foldline_length() abort
+  " TODO: optimize this function call
+  let how = lh#option#get('fold_options.max_foldline_length', 1)
+  if type(how) == type(42)
+    return how - &foldcolumn
+  elseif how =~ '\ctw\|textwidth'
+    return &tw - &foldcolumn
+  else " if how =~ '\cwin\%[dow]'
+    " I don't check for errors as it could mess vim
+    return winwidth(winnr()) - &foldcolumn
+  endif
 endfunction
 
 "------------------------------------------------------------------------
@@ -512,7 +525,7 @@ endfunction
 
 " Function: s:IsLineTooLong(text)          {{{2
 function! s:IsLineTooLong(text) abort
-  return lh#encoding#strlen(line) > (winwidth(winnr()) - &foldcolumn)
+  return lh#encoding#strlen(line) > s:opt_max_foldline_length()
 endfunction
 
 "------------------------------------------------------------------------
