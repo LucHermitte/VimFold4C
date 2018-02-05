@@ -12,12 +12,15 @@ the fold boundaries.
 
 The foldtext displayed will also try to be as pertinent as possible:
 - Correctly indented
-- Template parameters may be discarded if they induce a foldtext line which is too long for the window width
-- Strip spaces in parenthesis, and eventually parameters when lines are too
-  longs)
+- Strip spaces in parenthesis
 - Strip `scopes::` (optional)
 - Multiple subsequent (consecutive ?) `#include` will be condensed into one line
 - `#if` & co are folded
+- When the fold text line to display is too long, simplifications are operated:
+    - Template parameters may be discarded
+    - Initialisation-lists are replaced with  `....`
+    - Parameter names are discarded
+    - Last parameters are discarded 
 
 
 ## Note
@@ -142,8 +145,6 @@ There is still a lot to be done:
 - [optional] fold a logging line spanning on several lines (`cout`, `printf`,
   `log(stuff << stuff)`
 - [optional] Fold visibilities
-- [optional] Merge function parameters when they induce fold lines too long to
-  fit
 - `#include`
   - [optional] cut the foldtext line when it's too long to fit
   - [optional] strip the dirname of each included file to build the foldtext

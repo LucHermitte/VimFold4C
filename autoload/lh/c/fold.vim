@@ -353,11 +353,8 @@ function! lh#c#fold#text_(lnum) abort
   if s:IsLineTooLong(line)
     " TODO: factorise option fetching
     let max_length = s:opt_max_foldline_length() - &foldcolumn
-    " TODO: implement a better heuristics that could recognize:
-    " - function declarations
-    " - function calls
-    " - initialization lists
-    let line = substitute(line, '\v^(.){'.(max_length-4).'}\zs.*', '....', '')
+    call s:Verbose('Trimming #%1: %2', a:lnum, line)
+    let line = s:TrimLongLine(line, max_length)
   endif
 
   " Return the result                                 {{{3
@@ -393,7 +390,7 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
-" Function: s:ResizeCache()                {{{2
+" Function: s:ResizeCache()                  {{{2
 function! s:ResizeCache() abort
   let missing = line('$') - len(b:fold_levels) + 1
   if missing > 0
@@ -408,7 +405,7 @@ function! s:ResizeCache() abort
   " @post len(*) == line('$') + 1
 endfunction
 
-" Function: s:CleanLine(line)              {{{2
+" Function: s:CleanLine(line)                {{{2
 " clean from comments
 " TODO: merge with similar functions in lh-cpp and lh-dev
 function! s:CleanLine(line) abort
@@ -421,7 +418,7 @@ function! s:CleanLine(line) abort
   return line
 endfunction
 
-" Function: s:WhereInstructionEnds()       {{{2
+" Function: s:WhereInstructionEnds()         {{{2
 " Given a line number, search for something that indicates the end of a
 " instruction => ; , {, }
 " TODO: Handle special case: "do { ... }\nwhile()\n;"
@@ -457,7 +454,7 @@ function! s:WhereInstructionEnds(lnum) abort
   return lnum
 endfunction
 
-" Function: s:IsACommentLine(lnum)         {{{2
+" Function: s:IsACommentLine(lnum)           {{{2
 function! s:IsACommentLine(lnum, or_blank) abort
   let line = getline(a:lnum)
   if line =~ '^\s*//'. (a:or_blank ? '\|^\s*$' : '')
@@ -472,7 +469,7 @@ function! s:IsACommentLine(lnum, or_blank) abort
   endif
 endfunction
 
-" Function: s:NextNonCommentNonBlank(lnum) {{{2
+" Function: s:NextNonCommentNonBlank(lnum)   {{{2
 " Comments => ignore them:
 " the fold level is determined by the code that follows
 function! s:NextNonCommentNonBlank(lnum, or_blank) abort
@@ -484,7 +481,7 @@ function! s:NextNonCommentNonBlank(lnum, or_blank) abort
   return lnum
 endfunction
 
-" Function: s:Build_ts()                   {{{2
+" Function: s:Build_ts()                     {{{2
 function! s:Build_ts() abort
   if !exists('s:ts_d') || (s:ts_d != &ts)
     let s:ts = repeat(' ', &ts)
@@ -493,7 +490,7 @@ function! s:Build_ts() abort
   return s:ts
 endfunction
 
-" Function: s:ShowInstrBegin()             {{{2
+" Function: s:ShowInstrBegin()               {{{2
 function! s:ShowInstrBegin() abort
   silent sign define Fold   text=~~ texthl=Identifier
 
@@ -505,7 +502,7 @@ function! s:ShowInstrBegin() abort
   endfor
 endfunction
 
-" Function: s:IncrFoldLevel(lnum)          {{{2
+" Function: s:IncrFoldLevel(lnum)            {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
 function! s:IncrFoldLevel(lnum, nb) abort
@@ -516,7 +513,7 @@ function! s:IncrFoldLevel(lnum, nb) abort
   return '>'.b:fold_levels[a:lnum]
 endfunction
 
-" Function: s:DecrFoldLevel(lnum)          {{{2
+" Function: s:DecrFoldLevel(lnum)            {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
 function! s:DecrFoldLevel(lnum, nb) abort
@@ -527,7 +524,7 @@ function! s:DecrFoldLevel(lnum, nb) abort
   return '<'.(b:fold_levels[a:lnum]+1)
 endfunction
 
-" Function: s:KeepFoldLevel(lnum)          {{{2
+" Function: s:KeepFoldLevel(lnum)            {{{2
 " @pre lnum > 0
 " @pre len(b:fold_levels) == line('$')+1
 function! s:KeepFoldLevel(lnum) abort
@@ -539,9 +536,69 @@ function! s:KeepFoldLevel(lnum) abort
 endfunction
 
 
-" Function: s:IsLineTooLong(text)          {{{2
+" Function: s:IsLineTooLong(text)            {{{2
 function! s:IsLineTooLong(text) abort
   return lh#encoding#strlen(a:text) > s:opt_max_foldline_length()
+endfunction
+
+" Function: s:TrimLongLine(line, max_length) {{{2
+" @pre lh#encoding#strlen(a:line) > max_length -- unchecked
+" TODO: implement a better heuristics that could recognize:
+" -[X] initialization lists
+" -[X] function declarations
+" -[ ] function calls
+let s:k_annotations = {
+      \ 'const'    : ' const',
+      \ 'volatile' : ' volatile',
+      \ 'overriden': ' override',
+      \ 'final'    : ' final'
+      \ }
+let s:k_proto_pattern = '(.*)\(\s*\(\<noexcept\>\|\<volatile\>\|\<const\>\|\<final\>\|\<override\>\|=\s*0\)\)*'
+let s:k_has_lhcpp = !empty(globpath(&rtp, 'autoload/lh/cpp/AnalysisLib_Function.vim'))
+function! s:TrimLongLine(line, max_length) abort
+  call s:Verbose('TrimLongLine(%1, %2)', a:line, a:max_length)
+  let line = a:line
+  " 1- detect initialization-list (top priority)
+  let p = match(line, ')\s*:[^:]')
+  if p > 0
+    let line = line[:p]
+    let len = lh#encoding#strlen(line)
+    call s:Verbose('Initialisation list found; p=%1, strlen(:p)=%2', p, len)
+    if len > a:max_length - 7
+      let line = s:TrimLongLine(line, a:max_length-7)
+    endif
+    let line .= ' : ....'
+    return line
+  endif
+
+  " 2- detect functions signatures (and calls...)
+  " -- if and only if lh-cpp is detected
+  if s:k_has_lhcpp && line =~ s:k_proto_pattern
+    call s:Verbose('Function found')
+    let indent = matchstr(line, '^\s*')
+    let proto = lh#cpp#AnalysisLib_Function#AnalysePrototype(a:line)
+    let elements = []
+    if !empty(get(proto, 'return', ''))
+      let elements += [proto.return]
+    endif
+    let elements += [join(proto.name, '::')]
+    let line = indent . join(elements, ' ')
+    let line .= '(' . join(map(proto.parameters, 'v:val.type'), ', ') . ')'
+    let annotations = ['const', 'volatile', 'overriden', 'final']
+    call map(annotations, 'get(s:k_annotations, get(proto, v:val, 0) ? v:val : "", "")')
+    let line = join([line]+annotations, '')
+    let len = lh#encoding#strlen(line)
+    if len > a:max_length
+      let p = stridx(line, ')')
+      let line = s:TrimLongLine(line[:p-1], a:max_length-(len-p)) . line[p:]
+    endif
+    return line
+  endif
+
+  " n- Default case: trim!
+  call s:Verbose('Default case')
+  let line = substitute(line, '\v^(.){'.(a:max_length-4).'}\zs.*', '....', '')
+  return line
 endfunction
 
 "------------------------------------------------------------------------

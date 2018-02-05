@@ -29,6 +29,44 @@ private:
     std::string m_bar;
 };
 
+class MyClass
+{
+    Type var1;
+    Type var2;
+    Type var3;
+    Type var4;
+    Type var5;
+    Type var6;
+
+    std::vector<int> some_function2(Type2 argument1,
+            Type && argument2,
+            Type const& argument3,
+            Type argument4,
+            Type argument5,
+            Type argument6) const override;
+    std::vector<int> some_function(Type2 argument1,
+            Type && argument2,
+            Type const& argument3,
+            Type argument4,
+            Type argument5,
+            Type argument6) const override {
+        std::cout << "yep";
+    }
+    MyClass(Type argument1,
+            Type && argument2,
+            Type const& argument3,
+            Type argument4,
+            Type argument5,
+            Type argument6) :
+        var1(argument1),
+        var2(argument2),
+        var3(argument3),
+        var4(argument4),
+        var5(argument5),
+        var6(argument6)
+    {};
+};
+
 void control_statements() {
     // ifs ...
     if (42 == 41) {
