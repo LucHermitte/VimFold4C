@@ -2,8 +2,8 @@
 " File:         autoload/lh/c/fold.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-" Version:      3.0.8
-let s:k_version = 308
+" Version:      3.1.0
+let s:k_version = 310
 " Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
