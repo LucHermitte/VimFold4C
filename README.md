@@ -1,12 +1,12 @@
 VimFold4C
 =========
 
-Reactive vim fold plugin for C &amp; C++ (and similar languages)
+Reactive vim fold plugin for C &amp; C++ (and similar languages).
 
 Unlike folding on syntax or on indent, this script tries to correctly detect
 the fold boundaries.
 
-[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+[![Last release](https://img.shields.io/github/tag/LucHermitte/VimFold4C.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Features
 
