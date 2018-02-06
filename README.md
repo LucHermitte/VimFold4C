@@ -19,7 +19,7 @@ The foldtext displayed will also try to be as pertinent as possible:
 - When the fold text line to display is too long, simplifications are operated:
     - Template parameters may be discarded
     - Initialisation-lists are replaced with  `....`
-    - Parameter names are discarded
+    - Parameter names are discarded (this requires [lh-cpp](https://github.com/LucHermitte/lh-cpp)).
     - Last parameters are discarded 
 
 
@@ -98,13 +98,15 @@ The
 
   * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib)
 
-  * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-cpp. This is the preferred method because of the various dependencies.
+  * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install VimFold4C.
+
     ```vim
     ActivateAddons VimFold4C
     ```
 
   * or with [vim-flavor](http://github.com/kana/vim-flavor) which also supports
     dependencies:
+
     ```
     flavor 'LucHermitte/VimFold4C'
     ```
@@ -115,11 +117,15 @@ The
     [vim-pi](https://bitbucket.org/vimcommunity/vim-pi), or with
     [vim-flavor](http://github.com/kana/vim-flavor) this fold-plugin will get
     automatically installed.
+
     ```vim
     ActivateAddons lh-cpp
     " Or just this one (and soon as I register it in vim-pi):
     ActivateAddons VimFold4C
     ```
+
+    This is the preferred method because of the various dependencies, and
+    because VimFold4C will do a better job if lh-cpp is installed and detected.
 
   * or with Vundle/NeoBundle (expecting I haven't forgotten anything):
 
