@@ -27,7 +27,7 @@ endfunction
 
 " # Debug   {{{2
 let s:verbose = get(s:, 'verbose', 0)
-function! lh#c#fold#verbose(...)
+function! lh#c#fold#verbose(...) "{{{3
   if a:0 > 0 | let s:verbose = a:1 | endif
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
@@ -41,18 +41,44 @@ function! lh#c#fold#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Log(expr, ...)
+function! s:Log(expr, ...) "{{{3
   call call('lh#log#this',[a:expr]+a:000)
 endfunction
 
-function! s:Verbose(expr, ...)
+function! s:Verbose(expr, ...) "{{{3
   if s:verbose >= 2
     call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
-function! lh#c#fold#debug(expr) abort
+function! lh#c#fold#debug(expr) abort "{{{3
   return eval(a:expr)
+endfunction
+
+" Function: lh#c#fold#toggle_balloons() {{{3
+function! lh#c#fold#toggle_balloons() abort
+  if &bexpr == 'lh#c#fold#_balloon_expr()'
+    call s:balloon_reset.finalize()
+    call lh#common#WarningMsg('Stop balloon debugging for VimFold4C')
+  else
+    let s:balloon_reset = lh#on#exit()
+          \.restore('&beval')
+          \.restore('&bexpr')
+    set beval bexpr=lh#c#fold#_balloon_expr()
+    call lh#common#WarningMsg('Start balloon debugging for VimFold4C')
+  endif
+endfunction
+
+" Function: lh#c#fold#_balloon_expr() {{{3
+function! lh#c#fold#_balloon_expr() abort
+  let l = v:beval_lnum
+  let expr = printf("Debug VimFold4C\nline: %d\nlevel: %d\ndata: [%d, %d]\ninstr: [%d, %d]\ncontext: %s",
+        \ l, b:fold_levels[l],
+        \ b:fold_data_begin[l], b:fold_data_end[l],
+        \ b:fold_data_instr_begin[l], b:fold_data_instr_end[l],
+        \ b:fold_context[l]
+        \ )
+  return expr
 endfunction
 
 " # Options                                {{{2
