@@ -4,8 +4,8 @@
 "		<URL:http://github.com/LucHermitte/VimFold4C>
 " License:      GPLv3 with exceptions
 "               <URL:http://code.google.com/p/lh-vim/wiki/License>
-" Version:	3.0.6
-let s:k_version = 306
+" Version:	3.1.0
+let s:k_version = 310
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -64,16 +64,19 @@ let b:fold_data_instr_end   = deepcopy(b:fold_data_begin)
 let b:fold_data_end         = deepcopy(b:fold_data_begin)
 let b:fold_levels           = deepcopy(b:fold_data_begin)
 let b:fold_context          = repeat([''], 1+line('$'))
+let b:fold_data             = {}
+let b:fold_data.last_updated = 0
 
 " Mappings {{{1
 nnoremap <silent> <buffer> zx :call lh#c#fold#clear('zx')<cr>
 nnoremap <silent> <buffer> zX :call lh#c#fold#clear('zX')<cr>
 
 " To help debug
-nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- foldlevels:'.string(b:fold_levels[(line('.')-1):line('.')]).' -- @'.line('.').' -- [beg,end;instr_beg,instr_end]:['.b:fold_data_begin[line('.')].','.b:fold_data_end[line('.')].','.b:fold_data_instr_begin[line('.')].','.b:fold_data_instr_end[line('.')].'] --> ctx:'.b:fold_context[line('.')]<CR>
+" nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- foldlevels:'.string(b:fold_levels[(line('.')-1):line('.')]).' -- @'.line('.').' -- [beg,end;instr_beg,instr_end]:['.b:fold_data_begin[line('.')].','.b:fold_data_end[line('.')].','.b:fold_data_instr_begin[line('.')].','.b:fold_data_instr_end[line('.')].'] --> ctx:'.b:fold_context[line('.')]<CR>
 
 
 "------------------------------------------------------------------------
+" }}}1
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:

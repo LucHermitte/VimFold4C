@@ -140,9 +140,7 @@ function! lh#c#fold#expr(lnum) abort
 
   " 2- Then return what must be {{{4
   let instr_start = b:fold_data_instr_begin[a:lnum]
-  let instr_lines = getline(instr_start, where_it_ends)
-  " TODO: support multiline comments
-  call map(instr_lines, "s:CleanLine(v:val)")
+  let instr_lines = s:getline(instr_start, where_it_ends)
 
   " Case: "} catch|else|... {" & "#elif" & "#else" {{{5
   " TODO: use the s:opt_show_if_and_else() option
@@ -218,7 +216,7 @@ function! lh#c#fold#expr(lnum) abort
   if a:lnum == where_it_starts
     if     line =~ '^\s*#\s*ifndef'
       let symbol = matchstr(line, '^\s*#\s*ifndef\s\+\zs\S\+')
-      if (s:CleanLine(getline(a:lnum+1)) !~ '^\s*#\s*define\s\+'.symbol.'\s*$') || !empty(filter(b:fold_context[:a:lnum], 'v:val == "#if"'))
+      if (s:getline(a:lnum+1) !~ '^\s*#\s*define\s\+'.symbol.'\s*$') || !empty(filter(b:fold_context[:a:lnum], 'v:val == "#if"'))
         let b:fold_context[a:lnum] = '#if'
         return s:IncrFoldLevel(a:lnum, 1)
         " else: we ignore the first which is likelly an anti-reinclusion
@@ -256,8 +254,8 @@ function! lh#c#fold#expr(lnum) abort
   call map(instr_lines, "substitute(v:val, '^[^{]*}\\ze.*{', '', '')")
 
   let line = join(instr_lines, '')
-  let incr = len(substitute(line, '[^{]', '', 'g'))
-  let decr = len(substitute(line, '[^}]', '', 'g'))
+  let incr = count(line, '{') " len(substitute(line, '[^{]', '', 'g'))
+  let decr = count(line, '}') " len(substitute(line, '[^}]', '', 'g'))
 
   if incr > decr  && a:lnum == where_it_starts
     return s:IncrFoldLevel(a:lnum, incr-decr)
@@ -429,6 +427,7 @@ function! lh#c#fold#clear(cmd) abort
   let b:fold_data_instr_end   = copy(b:fold_data_begin)
   let b:fold_levels           = copy(b:fold_data_begin)
   let b:fold_context          = repeat([''], 1+line('$'))
+  let b:fold_data.last_updated = 0
   exe 'normal! '.a:cmd
 endfunction
 
@@ -477,7 +476,7 @@ function! s:WhereInstructionEnds(lnum) abort
     if line =~ '^\s*$'
       break
     else
-      let line = s:CleanLine(line) " remove comments & strings
+      let line = s:getline(lnum) " remove comments & strings
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
         let last = lnum
         " Search next non empty line -- why don't I use nextnonblank(lnum)?
@@ -647,6 +646,36 @@ function! s:TrimLongLine(line, max_length) abort
   let line = substitute(line, '\v^(.){'.(a:max_length-4).'}\zs.*', '....', '')
   return line
 endfunction
+
+" Function: s:getline(first [, last]) abort {{{1
+" This function caches calls to s:CleanLine() as long as the file hasn't been
+" modified.
+" TODO: support multiline comments
+if exists('*undotree')
+  function! s:getline(...) abort
+    let ut = undotree()
+    let time = get(ut.entries, -1, {'time': localtime()}).time
+    if b:fold_data.last_updated < time
+      let b:fold_data.lines = [''] + getline(1, '$')
+      " TODO: -> s:getSNR
+      call map(b:fold_data.lines, 's:CleanLine(v:val)')
+      let b:fold_data.last_updated = time
+    endif
+    return a:0 == 1
+          \ ? b:fold_data.lines[(a:1)]
+          \ : b:fold_data.lines[(a:1) : (a:2)]
+  endfunction
+else
+  function! s:getline(...) abort
+    let res = call('getline', a:000)
+    if a:0 == 1
+      return s:CleanLine(res)
+    else
+      call map(res, 's:CleanLine(v:val)')
+      return res
+    endif
+  endfunction
+endif
 
 "------------------------------------------------------------------------
 " }}}1
