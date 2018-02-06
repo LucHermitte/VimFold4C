@@ -1,3 +1,8 @@
+#ifndef toto
+#define toto
+#endif
+
+
 // The includes...
 #include <string>
 #include <cassert>
@@ -275,7 +280,7 @@ void if_def() {
 #elif defined(bar)
     blie;
 #  ifndef eee
-    eee;
+    eee2;
 #  endif
     bla;
 #endif
