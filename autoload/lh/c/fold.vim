@@ -81,7 +81,7 @@ function! lh#c#fold#_balloon_expr() abort
   return expr
 endfunction
 
-" # Options                                {{{2
+" # Options {{{2
 " let b/g:fold_options = {
       " \ 'show_if_and_else': 1,
       " \ 'strip_template_arguments': 1,
@@ -143,15 +143,13 @@ function! lh#c#fold#expr(lnum) abort
   let instr_lines = getline(instr_start, where_it_ends)
   " TODO: support multiline comments
   call map(instr_lines, "s:CleanLine(v:val)")
-  let instr_line = join(instr_lines, '')
-  " let incr = len(substitute(instr_line, '[^{]', '', 'g'))
-  " let decr = len(substitute(instr_line, '[^}]', '', 'g'))
 
   " Case: "} catch|else|... {" & "#elif" & "#else" {{{5
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
   "  something new
   if a:lnum < line('$')
+    let instr_line = join(instr_lines, '')
     let next_line = getline(a:lnum+1)
     if next_line =~ '}.*{'
       " assert(where_it_ends < a:lnum+1)
@@ -174,12 +172,19 @@ function! lh#c#fold#expr(lnum) abort
   if line =~ '^\s*#\s*include'
     let b:fold_context[a:lnum] = 'include'
     if     b:fold_context[a:lnum-1] == '#if'
-      " Override include context
+      " Override #include context with #if
       let b:fold_context[a:lnum] = b:fold_context[a:lnum-1]
       return s:KeepFoldLevel(a:lnum)
     elseif b:fold_context[a:lnum-1] != 'include'
+      " Start a new #include block
       let b:fold_context[where_it_starts : where_it_ends]
             \ = repeat(['include'], 1 + where_it_ends - where_it_starts)
+      " And update the include context for the next elements...
+      if getline(where_it_ends+1) =~ '^\s*#\s*include'
+        let where_next_ends = s:WhereInstructionEnds(a:lnum+1)
+        let b:fold_context[where_it_starts : where_next_ends]
+              \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
+      endif
       return s:IncrFoldLevel(a:lnum, 1)
     endif
 
@@ -192,8 +197,12 @@ function! lh#c#fold#expr(lnum) abort
             \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
       return s:KeepFoldLevel(a:lnum)
     endif
-  elseif b:fold_context[a:lnum] == 'include' && a:lnum == where_it_ends
+  elseif b:fold_context[a:lnum] == 'include'
+    if a:lnum == where_it_ends
       return s:DecrFoldLevel(a:lnum, 1)
+    else
+      return s:KeepFoldLevel(a:lnum)
+    endif
   endif
 
   " Clear include context {{{5
@@ -459,7 +468,7 @@ endfunction
 function! s:WhereInstructionEnds(lnum) abort
   let last_line = line('$')
   let lnum = a:lnum
-  let last = lnum
+  " let last = lnum
   while lnum <= last_line
     "" Where the instruction started
     " let b:fold_data_begin[lnum] = a:lnum
@@ -467,12 +476,14 @@ function! s:WhereInstructionEnds(lnum) abort
     if line =~ '^\s*$'
       break
     else
-      let line = s:CleanLine(line)
+      let line = s:CleanLine(line) " remove comments & strings
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
         let last = lnum
+        " Search next non empty line -- why don't I use nextnonblank(lnum)?
         while lnum < last_line && getline(lnum+1) =~ '^\s*$'
           let lnum += 1
         endwhile
+        " call lh#assert#value(lnum).equal(max(nextnonblank(last+1)-1, last))
         break
       endif
     endif
@@ -482,8 +493,9 @@ function! s:WhereInstructionEnds(lnum) abort
   " assert(lnum <= last_line)
   let b:fold_data_instr_begin[(a:lnum):lnum] = map(b:fold_data_instr_begin[(a:lnum):lnum], 'min([v:val==0 ? (a:lnum) : v:val, a:lnum])')
   " let b:fold_data_instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
-  let b:fold_data_begin[(a:lnum):lnum]       = repeat([a:lnum], lnum-a:lnum+1)
-  let b:fold_data_end[(a:lnum):lnum]         = repeat([lnum], lnum-a:lnum+1)
+  let nb = lnum-a:lnum+1
+  let b:fold_data_begin[(a:lnum):lnum]       = repeat([a:lnum], nb)
+  let b:fold_data_end[(a:lnum):lnum]         = repeat([lnum], nb)
 
   return lnum
 endfunction
@@ -640,4 +652,3 @@ endfunction
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:
-"
