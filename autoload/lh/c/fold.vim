@@ -322,8 +322,9 @@ function! lh#c#fold#text_(lnum) abort
       let current = substitute(current, '\s*\\$', '', '')
       let break = ! in_macro_ctx
 
-    elseif current =~ '[^:]:[^:]'
+    elseif current =~ '[^:]:[^:]' && current !~ 'for\s*('
       " class XXX : ancestor
+      " Ignore C++11 for range loops
       let current = substitute(current, '\([^:]\):[^:].*$', '\1', 'g')
       let break = 1
     elseif current =~ '{\s*$'
