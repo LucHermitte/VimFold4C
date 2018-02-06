@@ -281,7 +281,8 @@ endfunction
 
 " Function: lh#c#fold#text()               {{{2
 function! lh#c#fold#text_(lnum) abort
-  let lnum = s:NextNonCommentNonBlank(a:lnum, s:opt_fold_blank())
+  let shall_fold_blank = s:opt_fold_blank()
+  let lnum = s:NextNonCommentNonBlank(a:lnum, shall_fold_blank)
 
   " Case: #include                                    {{{3
   if b:fold_data.context[a:lnum] == 'include'
@@ -289,7 +290,7 @@ function! lh#c#fold#text_(lnum) abort
     let lastline = line('$')
     while lnum <= lastline && b:fold_data.context[lnum] == 'include'
       let includes += [matchstr(getline(lnum), '["<]\zs.*\ze[">]')]
-      let lnum = s:NextNonCommentNonBlank(lnum+1, s:opt_fold_blank())
+      let lnum = s:NextNonCommentNonBlank(lnum+1, shall_fold_blank)
     endwhile
     return '#include '.join(includes, ' ')
   endif
@@ -351,7 +352,7 @@ function! lh#c#fold#text_(lnum) abort
       break
     endif
     " Goto next line
-    let lnum = s:NextNonCommentNonBlank(lnum + 1, s:opt_fold_blank())
+    let lnum = s:NextNonCommentNonBlank(lnum + 1, shall_fold_blank)
   endwhile
 
   " Strip whatever follows "case xxx:" and "default:" {{{3
@@ -478,7 +479,7 @@ function! s:WhereInstructionEnds(lnum) abort
     else
       let line = s:getline(lnum) " remove comments & strings
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
-        let last = lnum
+        " let last = lnum
         " Search next non empty line -- why don't I use nextnonblank(lnum)?
         while lnum < last_line && getline(lnum+1) =~ '^\s*$'
           let lnum += 1
