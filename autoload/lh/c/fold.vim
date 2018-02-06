@@ -46,7 +46,7 @@ function! s:Log(expr, ...)
 endfunction
 
 function! s:Verbose(expr, ...)
-  if s:verbose
+  if s:verbose >= 2
     call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
