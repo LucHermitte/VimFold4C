@@ -172,8 +172,6 @@ There is still a lot to be done:
     - increment foldlevel for every `case`
     - [optional] merge `case`s that aren't separated by a `break;`
   - `do { } while();` requires a specific handling
-- Technicalities
-  - merge all those `b:fold_*` internal variables
 
 ## History
 - A long time ago (~2001), Johannes Zellner published a first folding plugin
@@ -182,7 +180,7 @@ There is still a lot to be done:
   time. (the last version is still archived in
   <http://hermitte.free.fr/vim/ressources/lh-cpp.tar.gz>)
 - Eventually I got tired of the slow execution times and moved back to
-  foldmethod=indent.
+  `foldmethod=indent`.
 
 - Here is a new (2014) version almost entirely rewritten, that I hope will
   be fast enough to be usable.
