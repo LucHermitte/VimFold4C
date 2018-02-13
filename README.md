@@ -50,7 +50,8 @@ let g:fold_options = {
    \ 'show_if_and_else': 1,
    \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
-   \ 'max_foldline_length': 'win'
+   \ 'max_foldline_length': 'win',
+   \ 'merge_comments' : 1
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
@@ -59,7 +60,9 @@ let b:fold_options = {
    \ 'show_if_and_else': 1,
    \ 'strip_template_arguments': 1,
    \ 'strip_namespaces': 1,
-   \ 'max_foldline_length': 'win'
+   \ 'max_foldline_length': 'win',
+   \ 'merge_comments' : 0,
+   \ 'ignored_doxygen_fields : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
    \ }
 ```
 
@@ -93,6 +96,14 @@ The
   - _"win"_: stops at current window width
   - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
   - number: hardcoded maximum number of characters to keep.
+
+- `merge_comments` (default: 1) specifies whether comments shall be folded
+  together with the code or separativelly.
+
+- `ignored_doxygen_fields` (default: `['class', 'ingroup', 'function', 'def',
+  'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn',
+  'var']`) list of doxygen keywords that shall be ignored when computing the
+  folded text -- when `merge_comments == 0`
 
 ## Requirements / Installation
 

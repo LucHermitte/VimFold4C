@@ -89,6 +89,7 @@ endfunction
       " \ 'fold_blank': 1,
       " \ 'max_foldline_length': 'win'/'tw'/42,
       " \ 'merge_comments' : 1
+      " \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
       " \ }
 function! s:opt_show_if_and_else() abort
   return lh#option#get('fold_options.show_if_and_else', 1)
@@ -116,6 +117,16 @@ function! s:opt_max_foldline_length() abort
 endfunction
 function! s:opt_merge_comments() abort
   return lh#option#get('fold_options.merge_comments', 1)
+endfunction
+let s:k_ignored_doxygen_fields = ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+function! s:opt_ignored_doxygen_fields() abort
+  return lh#option#get('fold_options.ignored_doxygen_fields', s:k_ignored_doxygen_fields)
+endfunction
+
+function! s:line_doesnt_matches_an_ignored_doxygen_field(line) abort
+  let fields = s:opt_ignored_doxygen_fields()
+  let matches = map(copy(fields), 'match(a:line, "[@\\\\]".v:val)')
+  return empty(filter(matches, 'v:val >= 0'))
 endfunction
 
 "------------------------------------------------------------------------
@@ -274,7 +285,8 @@ function! lh#c#fold#expr(lnum) abort
     endif
   else
     " This is where we can detect instructions, or comments, spanning on several lines
-    if line =~ '{.*}' || (!opt_merge_comments && line =~ '\v^\s*(/\*.*\*/|//)')
+    if line =~ '{.*}'
+          \ || (!opt_merge_comments && join(getline(instr_start, where_it_ends), '') =~ '\v^\s*(/\*.*\*/|//)')
       " first case: oneliner that cannot be folded => we left it as it is
       if     a:lnum == instr_start && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)
       elseif a:lnum == instr_start                            | return s:IncrFoldLevel(a:lnum, 1)
@@ -292,14 +304,25 @@ function! lh#c#fold#text_(lnum) abort
 
   " Case: Don't merge comment                         {{{3
   if (lnum > a:lnum) && ! s:opt_merge_comments()
+    " => Extract something like the brief line...
     let lines = getline(b:fold_data.begin[a:lnum], b:fold_data.end[a:lnum])
-    " Extract something like the brief line...
-    let lead = matchstr(lines[0], '/..')
+    let [lead, lead_start, lead_end] = matchstrpos(lines[0], '\v/.[*!]?')
+    " Trim line of repeated characters, if any
+    let lines[0] = substitute(lines[0][lead_end:], '\v(.)\1+\s*$', '', '')
     let tail = matchstr(lines[-1], './\ze\s*$')
-    call map(lines, 'substitute(v:val, "\\v^\\s*(/\\*[*!]|//!|///)", "", "")')
+    " Remove leading characters like '*', '///', and so on
+    call map(lines, 'substitute(v:val, "\\v^\\s*(/\\*[*!]|//!|///|[*])", "", "")')
+    " Remove leading spaces
     call map(lines, 'substitute(v:val, "^\\s*", "", "")')
-    let end = index(lines, '')
-    let lines = lines[: end]
+    " * Ignore stuff like \class, @ingroup, ...
+    let ignored_doxygen_fields = s:opt_ignored_doxygen_fields()
+    call filter(lines, 's:line_doesnt_matches_an_ignored_doxygen_field(v:val)')
+    " * Extract brief line
+    " -> Search the first empty line after the first that is not empty...
+    let first = match(lines, '.')
+    let end = index(lines, '', first+1)
+    " -> Ignore what follows
+    let lines = lines[first : end]
     let line = join(lines, ' ')
     let line = substitute(line, '\.\zs.*', '', '')
     let line = substitute(line, '[\\@]brief ', '', '')
@@ -740,8 +763,8 @@ if exists('*undotree')
       "" getline_not_matching is too slow...
       " let b:fold_data.lines = [''] + map(range(1, line('$')), 's:g_syn_filter_comments.getline_not_matching(v:val)')
       let b:fold_data.lines = [''] + getline(1, '$')
-      " TODO: -> s:getSNR
       let ctx = {'is_in_a_continuing_comment': 0}
+      " TODO: -> s:getSNR
       call map(b:fold_data.lines, 's:CleanLineCtx(v:val, ctx)')
       let b:fold_data.last_updated = time
     endif
