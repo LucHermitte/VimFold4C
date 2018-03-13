@@ -287,7 +287,12 @@ function! lh#c#fold#expr(lnum) abort
     endif
   else
     " This is where we can detect instructions, or comments, spanning on several lines
-    if line =~ '{.*}'
+    " Note: ";" case permits to merge comments with single-line function
+    " declarations, but also to fold multi-line instructions. At this
+    " point, I don't see how to distinguish the two cases: functions
+    " calls and function declarations are quite alike.
+    " Should it be an option?
+    if line =~ '\v\{.*\}|;\s*$'
           \ || (!opt_merge_comments && join(getline(instr_start, where_it_ends), '') =~ '\v^\s*(/\*.*\*/|//)')
       " first case: oneliner that cannot be folded => we left it as it is
       if     a:lnum == instr_start && a:lnum == where_it_ends | return s:KeepFoldLevel(a:lnum)

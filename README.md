@@ -21,6 +21,8 @@ The foldtext displayed will also try to be as pertinent as possible:
     - Initialisation-lists are replaced with  `....`
     - Parameter names are discarded (this requires [lh-cpp](https://github.com/LucHermitte/lh-cpp)).
     - Last parameters are discarded 
+- fold any instruction, or declaration, spanning on several lines (`cout`,
+  `printf`, `log(stuff << stuff)`
 
 
 ## Note
@@ -159,8 +161,6 @@ However, I'm unlikely to handle specials cases in those languages.
 ## TO DO
 There is still a lot to be done:
 
-- [optional] fold a logging line spanning on several lines (`cout`, `printf`,
-  `log(stuff << stuff)`
 - [optional] Fold visibilities
 - `#include`
   - [optional] cut the foldtext line when it's too long to fit
