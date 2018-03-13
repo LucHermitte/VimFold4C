@@ -306,13 +306,20 @@ endfunction
 
 " Function: lh#c#fold#text()               {{{2
 function! lh#c#fold#text_(lnum) abort
+  " options cached
   let shall_fold_blank = s:opt_fold_blank()
+  let ts = s:Build_ts()
+
   let lnum = s:NextNonCommentNonBlank(a:lnum, shall_fold_blank)
 
   " Case: Don't merge comment                         {{{3
   if (lnum > a:lnum) && ! s:opt_merge_comments()
     " => Extract something like the brief line...
     let lines = getline(b:fold_data.begin[a:lnum], b:fold_data.end[a:lnum])
+
+    let leading_spaces = matchstr(lines[0], '^\s*')
+    let leading_spaces = substitute(leading_spaces, "\t", ts, 'g')
+
     let [lead, lead_start, lead_end] = matchstrpos(lines[0], '\v/.[*!]?\ze(\_s|$)')
     " Trim line of repeated characters, if any
     let lines[0] = substitute(lines[0][lead_end:], '\v(.)\1+\s*$', '', '')
@@ -333,7 +340,8 @@ function! lh#c#fold#text_(lnum) abort
     let line = join(lines, ' ')
     let line = substitute(line, '\v\.\zs(\_s|$).*', '', '')
     let line = substitute(line, '[\\@]brief ', '', '')
-    return lead.' '.line.' '.tail
+
+    return leading_spaces . lead.' '.line.' '.tail
   endif
 
   " Case: #include                                    {{{3
@@ -351,7 +359,6 @@ function! lh#c#fold#text_(lnum) abort
   " No need: What follows does the work
 
   " Loop for all the lines in the fold                {{{3
-  let ts = s:Build_ts()
   let line = ''
   let in_macro_ctx = 0
 
