@@ -64,7 +64,7 @@ function! lh#c#fold#toggle_balloons() abort
     let s:balloon_reset = lh#on#exit()
           \.restore('&beval')
           \.restore('&bexpr')
-    set beval bexpr=lh#c#fold#_balloon_expr()
+    setlocal beval bexpr=lh#c#fold#_balloon_expr()
     call lh#common#WarningMsg('Start balloon debugging for VimFold4C')
   endif
 endfunction
@@ -213,7 +213,9 @@ function! lh#c#fold#expr(lnum) abort
       return s:KeepFoldLevel(a:lnum)
     endif
   elseif b:fold_data.context[a:lnum] == 'include'
-    if a:lnum == where_it_ends
+    if a:lnum == where_it_ends && match(getline(a:lnum+1), '^\s*#\s*include') == -1
+      " line is the last in the "#include" context, and the next line
+      " doesn't match "#include" either => end of the fold
       return s:DecrFoldLevel(a:lnum, 1)
     else
       return s:KeepFoldLevel(a:lnum)
