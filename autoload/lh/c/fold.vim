@@ -306,7 +306,7 @@ function! lh#c#fold#text_(lnum) abort
   if (lnum > a:lnum) && ! s:opt_merge_comments()
     " => Extract something like the brief line...
     let lines = getline(b:fold_data.begin[a:lnum], b:fold_data.end[a:lnum])
-    let [lead, lead_start, lead_end] = matchstrpos(lines[0], '\v/.[*!]?')
+    let [lead, lead_start, lead_end] = matchstrpos(lines[0], '\v/.[*!]?\ze(\_s|$)')
     " Trim line of repeated characters, if any
     let lines[0] = substitute(lines[0][lead_end:], '\v(.)\1+\s*$', '', '')
     let tail = matchstr(lines[-1], './\ze\s*$')
@@ -324,7 +324,7 @@ function! lh#c#fold#text_(lnum) abort
     " -> Ignore what follows
     let lines = lines[first : end]
     let line = join(lines, ' ')
-    let line = substitute(line, '\.\zs.*', '', '')
+    let line = substitute(line, '\v\.\zs(\_s|$).*', '', '')
     let line = substitute(line, '[\\@]brief ', '', '')
     return lead.' '.line.' '.tail
   endif
