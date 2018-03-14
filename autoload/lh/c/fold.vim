@@ -71,6 +71,13 @@ endfunction
 
 " Function: lh#c#fold#_balloon_expr() {{{3
 function! lh#c#fold#_balloon_expr() abort
+  if !exists('b:fold_data')
+    " This may happen when splitting a window where bexpr is set
+    " `:sp` copy all local option values, even if the filetype of the
+    " buffer on't be compatible...
+    setlocal bexpr<
+    return
+  endif
   let l = v:beval_lnum
   let expr = printf("Debug VimFold4C\nline: %d\nlevel: %d\ndata: [%d, %d]\ninstr: [%d, %d]\ncontext: %s",
         \ l, b:fold_data.levels[l],
