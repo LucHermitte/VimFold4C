@@ -32,7 +32,7 @@ function! lh#c#fold#verbose(...) "{{{3
   if s:verbose
     sign define Fold0   text=0  texthl=Identifier
     for i in range(1, 9)
-      exe 'sign define Fold'.i.'   text=|'.i.'  texthl=Identifier'
+      exe 'sign define Fold'.i.'   text=|'.i.' texthl=Identifier'
       exe 'sign define Fold'.i.'gt text=>'.i.' texthl=Identifier'
       exe 'sign define Fold'.i.'lt text=<'.i.' texthl=Identifier'
     endfor
@@ -90,13 +90,14 @@ endfunction
 
 " # Options {{{2
 " let b/g:fold_options = {
-      " \ 'show_if_and_else': 1,
-      " \ 'strip_template_arguments': 1,
-      " \ 'strip_namespaces': 1,
       " \ 'fold_blank': 1,
+      " \ 'fold_includes': 1,
+      " \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
       " \ 'max_foldline_length': 'win'/'tw'/42,
       " \ 'merge_comments' : 1
-      " \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+      " \ 'show_if_and_else': 1,
+      " \ 'strip_namespaces': 1,
+      " \ 'strip_template_arguments': 1,
       " \ }
 function! s:opt_show_if_and_else() abort
   return lh#option#get('fold_options.show_if_and_else', 1)
@@ -109,6 +110,9 @@ function! s:opt_strip_namespaces() abort
 endfunction
 function! s:opt_fold_blank() abort
   return lh#option#get('fold_options.fold_blank', 1)
+endfunction
+function! s:opt_fold_includes() abort
+  return lh#option#get('fold_options.fold_includes', 1)
 endfunction
 function! s:opt_max_foldline_length() abort
   " TODO: optimize this function call
@@ -191,7 +195,8 @@ function! lh#c#fold#expr(lnum) abort
   let line  = getline(where_it_ends)
 
   " Case: #include {{{5
-  if line =~ '^\s*#\s*include'
+  let fold_includes = s:opt_fold_includes()
+  if fold_includes && line =~ '^\s*#\s*include'
     let b:fold_data.context[a:lnum] = 'include'
     if     b:fold_data.context[a:lnum-1] == '#if'
       " Override #include context with #if

@@ -49,28 +49,53 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 ```vim
 " In the .vimrc
 let g:fold_options = {
-   \ 'show_if_and_else': 1,
-   \ 'strip_template_arguments': 1,
-   \ 'strip_namespaces': 1,
+   \ 'fold_includes': 0,
    \ 'max_foldline_length': 'win',
    \ 'merge_comments' : 1
+   \ 'show_if_and_else': 1,
+   \ 'strip_namespaces': 1,
+   \ 'strip_template_arguments': 1,
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
-   \ 'show_if_and_else': 1,
-   \ 'strip_template_arguments': 1,
-   \ 'strip_namespaces': 1,
+   \ 'fold_includes': 1,
+   \ 'ignored_doxygen_fields : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
    \ 'max_foldline_length': 'win',
    \ 'merge_comments' : 0,
-   \ 'ignored_doxygen_fields : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+   \ 'show_if_and_else': 1,
+   \ 'strip_namespaces': 1,
+   \ 'strip_template_arguments': 1,
    \ }
 ```
 
 ### Available options
 The
 [options](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md) are:
+
+- `fold_includes` (default: _true_) tells to fold blocks of `#include` directives.
+
+- `ignored_doxygen_fields` (default: `['class', 'ingroup', 'function', 'def',
+  'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn',
+  'var']`) list of doxygen keywords that shall be ignored when computing the
+  folded text -- when `merge_comments == 0`
+
+- `max_foldline_length` (default: _"win"_) specifies the maximum line length
+  of the fold text. The possibile values are: 
+  - _"win"_: stops at current window width
+  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
+  - number: hardcoded maximum number of characters to keep.
+
+- `merge_comments` (default: 1) specifies whether comments shall be folded
+  together with the code or separativelly.
+
+- `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
+  `boost::filesystem::` from the fold text generated.
+
+- `strip_template_arguments` (default: _true_) strips template arguments from
+  the fold text generated if the text would be too long for the current window
+  width
 
 - `show_if_and_else` (which is currently hard-coded to _true_) requires to have
   two folds on
@@ -85,27 +110,6 @@ The
 
     instead of the single fold we have when using `indent` _foldmethod_ (or was it
     the `syntax` one ?).
-
-- `strip_template_arguments` (default: _true_) strips template arguments from
-  the fold text generated if the text would be too long for the current window
-  width
-
-- `strip_namespaces` (default: _true_) tells to strip scopes like `std::` or
-  `boost::filesystem::` from the fold text generated.
-
-- `max_foldline_length` (default: _"win"_) specifies the maximum line length
-  of the fold text. The possibile values are: 
-  - _"win"_: stops at current window width
-  - _"tw"_: stops at current [`'textwidth'`](http://vimhelp.appspot.com/options.txt.html#%27tw%27) column
-  - number: hardcoded maximum number of characters to keep.
-
-- `merge_comments` (default: 1) specifies whether comments shall be folded
-  together with the code or separativelly.
-
-- `ignored_doxygen_fields` (default: `['class', 'ingroup', 'function', 'def',
-  'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn',
-  'var']`) list of doxygen keywords that shall be ignored when computing the
-  folded text -- when `merge_comments == 0`
 
 ## Requirements / Installation
 
