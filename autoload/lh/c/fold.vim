@@ -109,6 +109,7 @@ function! s:opt_strip_namespaces() abort
   return lh#option#get('fold_options.strip_namespaces', 1)
 endfunction
 function! s:opt_fold_blank() abort
+  " Empty lines shall always not be merged with the previous line
   return lh#option#get('fold_options.fold_blank', 1)
 endfunction
 function! s:opt_fold_includes() abort
@@ -149,6 +150,7 @@ endfunction
 " It means sometimes we have to refresh everything with zx/zX
 function! lh#c#fold#expr(lnum) abort
   let opt_merge_comments = s:opt_merge_comments()
+  let opt_fold_blank = s:opt_fold_blank()
 
   " 0- Resize b:fold_* arrays to have as many lines as the buffer {{{4
   call s:ResizeCache()
@@ -157,7 +159,7 @@ function! lh#c#fold#expr(lnum) abort
   let where_it_starts = b:fold_data.begin[a:lnum]
   if where_it_starts == 0
     " it's possible the boundaries was never known => compute thems
-    let where_it_ends   = s:WhereInstructionEnds(a:lnum, opt_merge_comments)
+    let where_it_ends   = s:WhereInstructionEnds(a:lnum, opt_merge_comments, opt_fold_blank)
     let where_it_starts = b:fold_data.begin[a:lnum]
   else
     " Actually, we can't know when text is changed, the where it starts may
@@ -208,14 +210,14 @@ function! lh#c#fold#expr(lnum) abort
             \ = repeat(['include'], 1 + where_it_ends - where_it_starts)
       " And update the include context for the next elements...
       if getline(where_it_ends+1) =~ '^\s*#\s*include'
-        let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments)
+        let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments, opt_fold_blank)
         let b:fold_data.context[where_it_starts : where_next_ends]
               \ = repeat(['include'], 1 + where_next_ends - where_it_starts)
       endif
       return s:IncrFoldLevel(a:lnum, 1)
     endif
 
-    let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments)
+    let where_next_ends = s:WhereInstructionEnds(a:lnum+1, opt_merge_comments, opt_fold_blank)
     let next_lines = getline(a:lnum+1, where_next_ends)
     if match(next_lines, '^\s*#\s*include') == -1
       return s:DecrFoldLevel(a:lnum, 1)
@@ -563,10 +565,11 @@ endfunction
 " Function: s:WhereInstructionEnds()         {{{2
 " Given a line number, search for something that indicates the end of a
 " instruction => ; , {, }
-" TODO: Handle special case: "do { ... }\nwhile()\n;"
+" TODO:
+" - Handle special case: "do { ... }\nwhile()\n;"
 let s:g_syn_filter_comments = lh#syntax#line_filter('\v\ccomment|doxygen')
 
-function! s:WhereInstructionEnds(lnum, opt_merge_comments) abort
+function! s:WhereInstructionEnds(lnum, opt_merge_comments, opt_fold_blank) abort
   let last_line = line('$')
   let lnum = a:lnum
   " let last = lnum
@@ -605,9 +608,11 @@ function! s:WhereInstructionEnds(lnum, opt_merge_comments) abort
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
         " let last = lnum
         " Search next non empty line -- why don't I use nextnonblank(lnum)?
-        while lnum < last_line && getline(lnum+1) =~ '^\s*$'
-          let lnum += 1
-        endwhile
+        if a:opt_fold_blank
+          while lnum < last_line && getline(lnum+1) =~ '^\s*$'
+            let lnum += 1
+          endwhile
+        endif
         " TODO: if there is no error => use this new value
         " call lh#assert#value(lnum).equal(max(nextnonblank(last+1)-1, last))
         break
@@ -814,4 +819,4 @@ endif
 " }}}1
 let &cpo=s:cpo_save
 "=============================================================================
-" vim600: set fdm=marker:
+" vim600: set fdm=marker:sw=2:
