@@ -285,8 +285,8 @@ function! lh#c#fold#expr(lnum) abort
   call map(instr_lines, "substitute(v:val, '^[^{]*}\\ze.*{', '', '')")
 
   let line = join(instr_lines, '')
-  let incr = count(line, '{') " len(substitute(line, '[^{]', '', 'g'))
-  let decr = count(line, '}') " len(substitute(line, '[^}]', '', 'g'))
+  let incr = lh#string#count_char(line, '{') " len(substitute(line, '[^{]', '', 'g'))
+  let decr = lh#string#count_char(line, '}') " len(substitute(line, '[^}]', '', 'g'))
 
   if incr > decr  && a:lnum == where_it_starts
     return s:IncrFoldLevel(a:lnum, incr-decr)

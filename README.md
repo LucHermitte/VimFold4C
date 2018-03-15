@@ -113,7 +113,7 @@ The
 
 ## Requirements / Installation
 
-  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib)
+  * Requirements: Vim 7.+, [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) 4.2.0+
 
   * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install VimFold4C.
 
