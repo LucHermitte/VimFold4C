@@ -49,27 +49,28 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 ```vim
 " In the .vimrc
 let g:fold_options = {
-   \ 'fold_blank: 0,
+   \ 'fold_blank': 0,
    \ 'fold_includes': 0,
    \ 'max_foldline_length': 'win',
-   \ 'merge_comments' : 1
+   \ 'merge_comments' : 1,
    \ 'show_if_and_else': 1,
    \ 'strip_namespaces': 1,
-   \ 'strip_template_arguments': 1,
+   \ 'strip_template_arguments': 1
    \ }
 ```
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
-   \ 'fold_blank: 1,
+   \ 'fold_blank': 1,
    \ 'fold_includes': 1,
-   \ 'ignored_doxygen_fields : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+   \ 'ignored_doxygen_fields': ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var'],
    \ 'max_foldline_length': 'win',
    \ 'merge_comments' : 0,
    \ 'show_if_and_else': 1,
    \ 'strip_namespaces': 1,
-   \ 'strip_template_arguments': 1,
+   \ 'strip_template_arguments': 1
    \ }
+
 ```
 
 ### Available options
