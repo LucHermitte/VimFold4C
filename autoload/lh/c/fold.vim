@@ -2,8 +2,8 @@
 " File:         autoload/lh/c/fold.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-" Version:      3.1.0
-let s:k_version = 310
+" Version:      3.1.1
+let s:k_version = 311
 " Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -496,12 +496,12 @@ endfunction
 " + special case: #includes
 function! lh#c#fold#clear(cmd) abort
   call lh#c#fold#verbose(s:verbose) " clear signs
-  let b:fold_data.begin       = repeat([0], 1+line('$'))
-  let b:fold_data.end         = copy(b:fold_data.begin)
-  let b:fold_data.instr_begin = copy(b:fold_data.begin)
-  let b:fold_data.instr_end   = copy(b:fold_data.begin)
-  let b:fold_data.levels           = copy(b:fold_data.begin)
-  let b:fold_data.context          = repeat([''], 1+line('$'))
+  let b:fold_data.begin        = repeat([0], 2+line('$'))
+  let b:fold_data.end          = copy(b:fold_data.begin)
+  let b:fold_data.instr_begin  = copy(b:fold_data.begin)
+  let b:fold_data.instr_end    = copy(b:fold_data.begin)
+  let b:fold_data.levels       = copy(b:fold_data.begin)
+  let b:fold_data.context      = repeat([''], 2+line('$'))
   let b:fold_data.last_updated = 0
   exe 'normal! '.a:cmd
 endfunction
@@ -510,15 +510,15 @@ endfunction
 " ## Internal functions {{{1
 " Function: s:ResizeCache()                  {{{2
 function! s:ResizeCache() abort
-  let missing = line('$') - len(b:fold_data.levels) + 1
+  let missing = line('$') - len(b:fold_data.levels) + 2
   if missing > 0
     let to_be_appended = repeat([0], missing)
-    let b:fold_data.levels           += to_be_appended
+    let b:fold_data.levels      += to_be_appended
     let b:fold_data.begin       += to_be_appended
     let b:fold_data.end         += to_be_appended
     let b:fold_data.instr_begin += to_be_appended
     let b:fold_data.instr_end   += to_be_appended
-    let b:fold_data.context          += repeat([''], missing)
+    let b:fold_data.context     += repeat([''], missing)
   endif
   " @post len(*) == line('$') + 1
 endfunction
@@ -602,7 +602,7 @@ function! s:WhereInstructionEnds(lnum, opt_merge_comments, opt_fold_blank) abort
     " let b:fold_data.begin[lnum] = a:lnum
     let line = getline(lnum)
     if line =~ '^\s*$'
-      break
+      " break
     else
       let line = s:getline(lnum) " remove comments & strings
       if line =~ '[{}]\|^\s*#\|^\s*\(public\|private\|protected\):\|;\s*$'
@@ -621,7 +621,10 @@ function! s:WhereInstructionEnds(lnum, opt_merge_comments, opt_fold_blank) abort
     let lnum += 1
   endwhile
 
-  " assert(lnum <= last_line)
+  " let lnum = min([lnum, last_line])
+  " call lh#assert#value(lnum).is_le(last_line+1)
+  " call lh#assert#value(lnum).is_lt(len(b:fold_data.instr_begin))
+  " call lh#assert#value(a:lnum).is_le(lnum)
   let b:fold_data.instr_begin[(a:lnum):lnum] = map(b:fold_data.instr_begin[(a:lnum):lnum], 'min([v:val==0 ? (a:lnum) : v:val, a:lnum])')
   " let b:fold_data.instr_end[(a:lnum):last]   = repeat([last], last-a:lnum+1)
   let nb = lnum-a:lnum+1
