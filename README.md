@@ -3,8 +3,10 @@ VimFold4C
 
 Reactive vim fold plugin for C &amp; C++ (and similar languages).
 
-Unlike folding on syntax or on indent, this script tries to correctly detect
-the fold boundaries.
+Unlike folding on
+[syntax](http://vimhelp.appspot.com/fold.txt.html#fold%2dsyntax) or on
+[indent](http://vimhelp.appspot.com/fold.txt.html#fold%2dindent), this script
+tries to correctly detect the fold boundaries.
 
 [![Last release](https://img.shields.io/github/tag/LucHermitte/VimFold4C.svg)](https://github.com/LucHermitte/VimFold4C/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
@@ -116,6 +118,12 @@ The
 
     instead of the single fold we have when using `indent` _foldmethod_ (or was it
     the `syntax` one ?).
+
+#### Note
+Do not set the
+[`'foldmethod'`](http://vimhelp.appspot.com/options.txt.html#%27foldmethod%27)
+option in a ftplugin, or in an autocommand. VimFold4C already takes care of
+setting it to [`expr`](http://vimhelp.appspot.com/fold.txt.html#fold%2dexpr).
 
 ## Requirements / Installation
 
