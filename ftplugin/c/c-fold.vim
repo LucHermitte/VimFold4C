@@ -4,8 +4,8 @@
 "		<URL:http://github.com/LucHermitte/VimFold4C>
 " License:      GPLv3 with exceptions
 "               <URL:http://code.google.com/p/lh-vim/wiki/License>
-" Version:	3.1.0
-let s:k_version = 310
+" Version:	3.2.0
+let s:k_version = 320
 " Created:	06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -47,12 +47,40 @@ let s:cpo_save=&cpo
 set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
+" Functions {{{1
+function! s:opt_foldmethod() abort
+  let threshold = lh#option#get('fold_options.fallback_method.line_threshold', 0)
+  if 0 < threshold && threshold < line('$')
+    return lh#option#get('fold_options.fallback_method.method', 'syntax')
+  endif
+  return 'expr'
+endfunction
+
+"------------------------------------------------------------------------
 " Settings {{{1
 
 " Settings                                       {{{2
-setlocal foldexpr=lh#c#fold#expr(v:lnum)
-setlocal foldmethod=expr
-setlocal foldtext=lh#c#fold#text()
+
+" Function: s:init() {{{3
+function! s:init() abort
+  let method = s:opt_foldmethod()
+  if method == 'expr'
+    setlocal foldexpr=lh#c#fold#expr(v:lnum)
+    setlocal foldmethod=expr
+    setlocal foldtext=lh#c#fold#text()
+    return 1
+  else
+    exe 'setlocal foldmethod='.method
+    return 0
+  endif
+endfunction
+
+call s:init()
+
+" Function: s:clear(how) {{{3
+function! s:clear(how) abort
+  return s:init() && lh#c#fold#clear(a:how)
+endfunction
 
 " Script Debugging                               {{{2
 command! -b -nargs=0 ShowInstrBegin call lh#c#fold#debug(s:ShowInstrBegin())
@@ -68,8 +96,8 @@ let b:fold_data.context      = repeat([''], 1+line('$'))
 let b:fold_data.last_updated = 0
 
 " Mappings {{{1
-nnoremap <silent> <buffer> zx :call lh#c#fold#clear('zx')<cr>
-nnoremap <silent> <buffer> zX :call lh#c#fold#clear('zX')<cr>
+nnoremap <silent> <buffer> zx :call <sid>clear('zx')<cr>
+nnoremap <silent> <buffer> zX :call <sid>clear('zX')<cr>
 
 " To help debug
 " nnoremap <silent> µ :echo lh#c#fold#expr(line('.')).' -- foldlevels:'.string(b:fold_data.levels[(line('.')-1):line('.')]).' -- @'.line('.').' -- [beg,end;instr_beg,instr_end]:['.b:fold_data.begin[line('.')].','.b:fold_data.end[line('.')].','.b:fold_data.instr_begin[line('.')].','.b:fold_data.instr_end[line('.')].'] --> ctx:'.b:fold_data.context[line('.')]<CR>

@@ -2,8 +2,8 @@
 " File:         autoload/lh/c/fold.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "               <URL:http://github.com/LucHermitte/VimFold4C>
-" Version:      3.1.1
-let s:k_version = 311
+" Version:      3.2.0
+let s:k_version = 320
 " Created:      06th Jan 2002
 "------------------------------------------------------------------------
 " Description:
@@ -89,16 +89,17 @@ function! lh#c#fold#_balloon_expr() abort
 endfunction
 
 " # Options {{{2
-" let b/g:fold_options = {
-      " \ 'fold_blank': 1,
-      " \ 'fold_includes': 1,
-      " \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
-      " \ 'max_foldline_length': 'win'/'tw'/42,
-      " \ 'merge_comments' : 1
-      " \ 'show_if_and_else': 1,
-      " \ 'strip_namespaces': 1,
-      " \ 'strip_template_arguments': 1,
-      " \ }
+" let (bpg):fold_options = {
+"       \ 'fallback_method' : { 'line_threshold' : 2000, 'method' : 'syntax' },
+"       \ 'fold_blank': 1,
+"       \ 'fold_includes': 1,
+"       \ 'ignored_doxygen_fields' : ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var']
+"       \ 'max_foldline_length': 'win'/'tw'/42,
+"       \ 'merge_comments' : 1
+"       \ 'show_if_and_else': 1,
+"       \ 'strip_namespaces': 1,
+"       \ 'strip_template_arguments': 1,
+"       \ }
 function! s:opt_show_if_and_else() abort
   return lh#option#get('fold_options.show_if_and_else', 1)
 endfunction

@@ -51,6 +51,7 @@ You can set local or global options to tune the behaviour of this fold-plugin.
 ```vim
 " In the .vimrc
 let g:fold_options = {
+   \ 'fallback_method' : { 'line_threshold' : 2000, 'method' : 'syntax' },
    \ 'fold_blank': 0,
    \ 'fold_includes': 0,
    \ 'max_foldline_length': 'win',
@@ -63,6 +64,7 @@ let g:fold_options = {
 or from a [local_vimrc plugin](https://github.com/LucHermitte/local_vimrc):
 ```vim
 let b:fold_options = {
+   \ 'fallback_method' : { 'line_threshold' : 2000, 'method' : 'syntax' },
    \ 'fold_blank': 1,
    \ 'fold_includes': 1,
    \ 'ignored_doxygen_fields': ['class', 'ingroup', 'function', 'def', 'defgroup', 'exception', 'headerfile', 'namespace', 'property', 'fn', 'var'],
@@ -78,6 +80,14 @@ let b:fold_options = {
 ### Available options
 The
 [options](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md) are:
+
+- `fallback_method` (default: `{'line_threshold': 0}`) tells to use another
+  fold method when the number of lines in the current file is greater to the
+  given threshold.  
+  In that case use `fallback_method.method` on the current buffer as
+  [fold method](http://vimhelp.appspot.com/options.txt.html#%27foldmethod%27)
+  -- (default: [`"syntax"`](http://vimhelp.appspot.com/fold.txt.html#fold%2dsyntax)).  
+  This option is ignored if the threshold equals 0.
 
 - `fold_blank` (default: _true_) tells to fold blanks lines with the lines
   preceding them.
