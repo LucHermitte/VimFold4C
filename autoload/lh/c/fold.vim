@@ -153,10 +153,10 @@ function! lh#c#fold#expr(lnum) abort
   let opt_merge_comments = s:opt_merge_comments()
   let opt_fold_blank = s:opt_fold_blank()
 
-  " 0- Resize b:fold_* arrays to have as many lines as the buffer {{{4
+  " 0- Resize b:fold_* arrays to have as many lines as the buffer {{{3
   call s:ResizeCache()
 
-  " 1- First obtain the current fold boundaries {{{4
+  " 1- First obtain the current fold boundaries {{{3
   let where_it_starts = b:fold_data.begin[a:lnum]
   if where_it_starts == 0
     " it's possible the boundaries was never known => compute thems
@@ -169,11 +169,11 @@ function! lh#c#fold#expr(lnum) abort
   endif
 
 
-  " 2- Then return what must be {{{4
+  " 2- Then return what must be {{{3
   let instr_start = b:fold_data.instr_begin[a:lnum]
   let instr_lines = s:getline(instr_start, where_it_ends)
 
-  " Case: "} catch|else|... {" & "#elif" & "#else" {{{5
+  " Case: "} catch|else|... {" & "#elif" & "#else" {{{4
   " TODO: use the s:opt_show_if_and_else() option
   " -> We check the next line to see whether it closes something before opening
   "  something new
@@ -193,11 +193,11 @@ function! lh#c#fold#expr(lnum) abort
     endif
   endif
 
-  " The lines to analyze {{{5
+  " The lines to analyze {{{4
   let lines = getline(where_it_starts, where_it_ends)
   let line  = getline(where_it_ends)
 
-  " Case: #include {{{5
+  " Case: #include {{{4
   let fold_includes = s:opt_fold_includes()
   if fold_includes && line =~ '^\s*#\s*include'
     let b:fold_data.context[a:lnum] = 'include'
@@ -237,7 +237,7 @@ function! lh#c#fold#expr(lnum) abort
     endif
   endif
 
-  " Clear include context {{{5
+  " Clear include context {{{4
   " But maintain #if context and ignore #endif context
   if     b:fold_data.context[a:lnum-1] == '#if' && b:fold_data.context[a:lnum] != '#endif'
     let b:fold_data.context[a:lnum] = b:fold_data.context[a:lnum-1]
@@ -245,7 +245,7 @@ function! lh#c#fold#expr(lnum) abort
     let b:fold_data.context[a:lnum] = ''
   endif
 
-  " Case: Opening things ? {{{5
+  " Case: Opening things ? {{{4
   " The foldlevel increase can be done only at the start of the instruction
   if a:lnum == where_it_starts
     if     line =~ '^\s*#\s*ifndef'
@@ -266,7 +266,7 @@ function! lh#c#fold#expr(lnum) abort
     return s:KeepFoldLevel(a:lnum)
   endif
 
-  " Case: "#else", "#elif", "#endif" {{{5
+  " Case: "#else", "#elif", "#endif" {{{4
   if line =~ '^\s*#\s*\(else\|elif\)'
     return s:IncrFoldLevel(a:lnum, 1)
   elseif  match(lines, '^\s*#\s*endif') >= 0
@@ -283,7 +283,7 @@ function! lh#c#fold#expr(lnum) abort
       return s:DecrFoldLevel(a:lnum, 1)
   endif
 
-  " Case: "} ... {" -> "{"  // the return of the s:opt_show_if_and_else() {{{5
+  " Case: "} ... {" -> "{"  // the return of the s:opt_show_if_and_else() {{{4
   " TODO: support multiline comments
   call map(instr_lines, "substitute(v:val, '^[^{]*}\\ze.*{', '', '')")
 
@@ -497,6 +497,7 @@ endfunction
 " + special case: #includes
 function! lh#c#fold#clear(cmd) abort
   call lh#c#fold#verbose(s:verbose) " clear signs
+  echomsg "Clearing signs for ".expand('%')
   let b:fold_data.begin        = repeat([0], 2+line('$'))
   let b:fold_data.end          = copy(b:fold_data.begin)
   let b:fold_data.instr_begin  = copy(b:fold_data.begin)
